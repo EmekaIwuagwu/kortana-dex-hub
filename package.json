@@ -1,0 +1,21 @@
+{
+  "name": "kortanadex-contracts",
+  "version": "1.0.0",
+  "description": "KortanaDEX Smart Contracts",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
+    "deploy:testnet": "npx hardhat run scripts/deploy_mainnet.ts --network kortanaTestnet",
+    "deploy:mainnet": "npx hardhat run scripts/deploy_mainnet.ts --network kortanaMainnet"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.4",
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2"
+  }
+}

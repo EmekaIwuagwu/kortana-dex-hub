@@ -1,0 +1,10 @@
+node_modules
+.env
+.next
+build
+dist
+cache
+artifacts
+typechain-types
+hardhat.config.cjs.bak
+*.tsbuildinfo

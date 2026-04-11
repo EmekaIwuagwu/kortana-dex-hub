@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@config "../../tailwind.config.ts";
+
+:root {
+  /* Backgrounds */
+  --bg-base:        #060810;
+  --bg-surface:     #0d1117;
+  --bg-elevated:    #161b24;
+  --bg-overlay:     #1c2333;
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.20);
+
+  /* Accent — Electric Cyan/Teal (primary brand) */
+  --accent-primary:       #00d4ff;
+  --accent-primary-dim:   rgba(0, 212, 255, 0.12);
+  --accent-primary-glow:  rgba(0, 212, 255, 0.35);
+
+  /* Secondary Accent — Violet */
+  --accent-secondary:     #8b5cf6;
+  --accent-secondary-dim: rgba(139, 92, 246, 0.12);
+
+  /* Status */
+  --success:        #10b981;
+  --success-dim:    rgba(16, 185, 129, 0.12);
+  --warning:        #f59e0b;
+  --warning-dim:    rgba(245, 158, 11, 0.12);
+  --danger:         #ef4444;
+  --danger-dim:     rgba(239, 68, 68, 0.12);
+
+  /* Text */
+  --text-primary:   #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted:     #484f58;
+
+  /* Typography */
+  --font-ui:        "Inter", -apple-system, sans-serif;
+  --font-mono:      "JetBrains Mono", "Fira Code", monospace;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
