@@ -10,7 +10,6 @@ const links = [
   { name: "Pool", href: "/pool" },
   { name: "Mint", href: "/mint" },
   { name: "Farm", href: "/farm" },
-  { name: "Bridge", href: "/bridge" },
   { name: "Docs", href: "/docs" },
   { name: "Analytics", href: "/analytics" },
 ];
