@@ -66,12 +66,12 @@ async function main() {
   console.log("✅", kusdtAddr);
 
   // ─── 9. Seed genesis pool (1 DNR = 385.90 ktUSD) ───────────────────────
-  console.log("\n🌱 Seeding genesis liquidity pool (Deep Liquidity)...");
+  console.log("\n🌱 Seeding genesis liquidity pool (MASSIVE LIQUIDITY)...");
   
   // Target: 1 DNR = 385.90 ktUSD
-  // Seeding 50,000 DNR to provide robust price depth
-  const seedDNR   = ethers.parseEther("50000"); 
-  const seedKTUSD = ethers.parseUnits((50000 * 385.90).toFixed(0), 18);
+  // Seeding 1,000,000 DNR to provide extreme price depth
+  const seedDNR   = ethers.parseEther("1000000"); 
+  const seedKTUSD = ethers.parseUnits((1000000 * 385.90).toFixed(0), 18);
 
   process.stdout.write(`  Minting ${ethers.formatEther(seedKTUSD)} ktUSD... `);
   await (await MonoDEX.mint(deployer.address, seedKTUSD, { gasLimit: 500000, type: 0 })).wait();
@@ -82,7 +82,7 @@ async function main() {
   console.log("  ktUSD balance on-chain:", ethers.formatEther(ktBal));
   if (ktBal < seedKTUSD) throw new Error("FATAL: ktUSD balance insufficient after mint");
 
-  process.stdout.write(`  Adding genesis liquidity (${ethers.formatEther(seedDNR)} DNR)... `);
+  process.stdout.write(`  Adding genesis liquidity (1,000,000 DNR)... `);
   await (await MonoDEX.addLiquidity(
     seedKTUSD,
     0,              // no slippage protection on genesis
@@ -90,11 +90,11 @@ async function main() {
     deployer.address,
     { value: seedDNR, gasLimit: 5000000, type: 0 }
   )).wait();
-  console.log("✅ 1 DNR = 385.90 ktUSD ANCHORED (DEEP)");
+  console.log("✅ 1 DNR = 385.90 ktUSD ANCHORED (EXTREME DEPTH)");
 
   // ─── 10. Fund Farm with initial DNR rewards ─────────────────────────
-  process.stdout.write("Funding Farm with 50,000 DNR (Rewards)... ");
-  await (await deployer.sendTransaction({ to: farmAddr, value: ethers.parseEther("50000"), gasLimit: 200000, type: 0 })).wait();
+  process.stdout.write("Funding Farm with 200,000 DNR (Rewards)... ");
+  await (await deployer.sendTransaction({ to: farmAddr, value: ethers.parseEther("200000"), gasLimit: 200000, type: 0 })).wait();
   console.log("✅");
 
   // ─── 11. Whitelist KLP pool in Farm ─────────────────────────────────
