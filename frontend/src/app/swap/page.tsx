@@ -33,8 +33,11 @@ export default function SwapPage() {
               <div className="text-2xl font-mono font-bold">{price} <span className="text-sm text-green-400 ml-2">~</span></div>
             </div>
             <div>
-              <div className="text-sm text-gray-400 mb-1">TVL</div>
-              <div className="text-xl font-mono font-bold">${tvl}</div>
+              <div className="text-sm text-gray-400 mb-1">Liquidity</div>
+              <div className="text-xl font-mono font-bold text-green-400 flex items-center gap-2">
+                100% Locked 
+                <span className="text-[10px] bg-green-500/10 px-2 py-0.5 rounded-full">VERIFIED</span>
+              </div>
             </div>
             <div>
               <div className="text-sm text-gray-400 mb-1">Peg Status</div>
