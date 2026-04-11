@@ -11,6 +11,7 @@ const links = [
   { name: "Mint", href: "/mint" },
   { name: "Farm", href: "/farm" },
   { name: "Docs", href: "/docs" },
+  { name: "OTC", href: "/otc" },
   { name: "Analytics", href: "/analytics" },
 ];
 
