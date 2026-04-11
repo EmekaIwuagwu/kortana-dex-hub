@@ -7,6 +7,7 @@ const kortanaMainnet = {
   nativeCurrency: { name: "DNR", symbol: "DNR", decimals: 18 },
   rpcUrls: {
     default: { http: ["https://zeus-rpc.mainnet.kortana.xyz"] },
+    public: { http: ["https://zeus-rpc.mainnet.kortana.xyz"] },
   },
   blockExplorers: {
     default: { name: "Kortana Explorer", url: "https://explorer.mainnet.kortana.xyz" },
@@ -18,7 +19,8 @@ const kortanaTestnet = {
   name: "Kortana Testnet",
   nativeCurrency: { name: "DNR", symbol: "DNR", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://poseidon-rpc.testnet.kortana.xyz/"] },
+    default: { http: ["https://poseidon-rpc.testnet.kortana.xyz"] },
+    public: { http: ["https://poseidon-rpc.testnet.kortana.xyz"] },
   },
   blockExplorers: {
     default: { name: "Kortana Explorer", url: "https://explorer.testnet.kortana.xyz" },
@@ -27,10 +29,11 @@ const kortanaTestnet = {
 
 export const config = getDefaultConfig({
   appName: "KortanaDEX",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || "demo_project_id",
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || "3fcc6b5675e297800e84b72643a37554", // Using a stable Project ID
   chains: [kortanaMainnet, kortanaTestnet],
+  ssr: true,
   transports: {
     [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz"),
-    [kortanaTestnet.id]: http("https://poseidon-rpc.testnet.kortana.xyz/"),
+    [kortanaTestnet.id]: http("https://poseidon-rpc.testnet.kortana.xyz"),
   },
 });
