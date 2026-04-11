@@ -85,11 +85,11 @@ export default function OTCPage() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-6 justify-center">
-                    <a href="mailto:admin@kortana.xyz" className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group">
+                    <a href="mailto:support@kortana.network" className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group">
                         <Mail className="w-5 h-5 text-[#00d4ff]" />
                         <div className="text-left">
                             <p className="text-[10px] uppercase text-gray-500 font-mono tracking-widest">Email Inquiry</p>
-                            <p className="font-bold">admin@kortana.xyz</p>
+                            <p className="font-bold">support@kortana.network</p>
                         </div>
                     </a>
                     <a href="#" className="flex items-center gap-4 px-8 py-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group cursor-not-allowed opacity-50">
