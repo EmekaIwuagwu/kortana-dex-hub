@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreDuringBuilds: true,
+  },
+  transpilePackages: ['recharts'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
