@@ -20,8 +20,8 @@ export function usePoolPosition(userKlpBalance: bigint) {
   });
 
   const lpTotalSupply = (lpTotalSupplyData as bigint) ?? BigInt(0);
-  const reserve0 = reservesData ? (reservesData as any)[0] as bigint : BigInt(0);
-  const reserve1 = reservesData ? (reservesData as any)[1] as bigint : BigInt(0);
+  const reserve0 = reservesData ? (reservesData as [bigint, bigint, number])[0] : BigInt(0);
+  const reserve1 = reservesData ? (reservesData as [bigint, bigint, number])[1] : BigInt(0);
 
   let userSharePct = 0;
   let userDNR = BigInt(0);

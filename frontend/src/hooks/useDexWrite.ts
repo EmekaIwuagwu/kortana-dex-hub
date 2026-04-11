@@ -9,8 +9,8 @@ export function useDexWrite() {
   const publicClient = usePublicClient({ chainId });
 
   const executeTx = async (
-    functionName: any,
-    args: any[],
+    functionName: string,
+    args: unknown[],
     value: bigint = BigInt(0),
     successMsg: string = "Transaction confirmed"
   ) => {
@@ -26,7 +26,7 @@ export function useDexWrite() {
           abi: DEX_ABI,
           functionName,
           args,
-        } as any) as `0x${string}`,
+        } as { abi: typeof DEX_ABI; functionName: string; args: unknown[] }) as `0x${string}`,
         value,
         gas: BigInt(500000), // Bug 1 fix
         type: "legacy", // Bug 5 fix
@@ -42,9 +42,10 @@ export function useDexWrite() {
         toast.error("Transaction reverted", { id: hash });
       }
       return { hash, receipt };
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e.shortMessage || e.message || "Transaction failed");
+      const error = e as { shortMessage?: string; message?: string };
+      toast.error(error.shortMessage || error.message || "Transaction failed");
       throw e;
     }
   };
