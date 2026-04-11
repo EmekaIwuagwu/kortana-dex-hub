@@ -27,15 +27,12 @@ const kortanaTestnet = {
   },
 } as const;
 
-// Detect production environment to filter out Testnet
-const isProduction = typeof window !== "undefined" && window.location.hostname === "dex.kortana.xyz";
-
-const chains = isProduction ? [kortanaMainnet] : [kortanaMainnet, kortanaTestnet];
+// Professional dual-network configuration for Kortana Wallet compatibility
+const chains = [kortanaMainnet, kortanaTestnet] as const;
 
 export const config = getDefaultConfig({
   appName: "KortanaDEX",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_ID || "3fcc6b5675e297800e84b72643a37554",
-  // @ts-ignore - Dynamic chains are supported but TS can be strict here
   chains: chains,
   ssr: true,
   transports: {
