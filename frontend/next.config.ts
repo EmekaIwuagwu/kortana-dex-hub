@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
         net: false,
         tls: false,
         ws: false,
+        buffer: false,
       };
     }
     return config;
