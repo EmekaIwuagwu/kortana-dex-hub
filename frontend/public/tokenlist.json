@@ -1,0 +1,37 @@
+{
+  "name": "Kortana Token List",
+  "timestamp": "2026-04-11T12:00:00Z",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "keywords": ["kortana", "dex", "dnr", "ktusd"],
+  "logoURI": "https://dex.kortana.xyz/logo.png",
+  "tokens": [
+    {
+      "chainId": 9002,
+      "address": "0x0000000000000000000000000000000000000000",
+      "name": "Kortana DNR",
+      "symbol": "DNR",
+      "decimals": 18,
+      "logoURI": "https://dex.kortana.xyz/logo.png"
+    },
+    {
+      "chainId": 9002,
+      "address": "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45",
+      "name": "Kortana ktUSD",
+      "symbol": "ktUSD",
+      "decimals": 18,
+      "logoURI": "https://dex.kortana.xyz/logo.png"
+    },
+    {
+      "chainId": 9002,
+      "address": "0x6017846b164d606ae24B54732C8aC71b81bA1FdF",
+      "name": "Kortana USDT",
+      "symbol": "kUSDT",
+      "decimals": 6,
+      "logoURI": "https://dex.kortana.xyz/logo.png"
+    }
+  ]
+}
