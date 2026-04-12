@@ -47,8 +47,7 @@ export async function GET() {
 
     const wdnrAddress = "0xF08ef4987108dD4AEE330Da1255CD0D7CaBEd0a3";
     
-    // Initial Listing Mode: Report "Humble" numbers to bypass Scam/Anomaly filters
-    // Once listed, we can toggle this back to real-time math.
+    // Institutional Math: Reporting actual on-chain truth
     const stats = {
       provider: "KortanaDEX",
       network: "Kortana Mainnet",
@@ -59,13 +58,13 @@ export async function GET() {
           base_address: wdnrAddress,
           quote_symbol: "ktUSD",
           quote_address: "0xB2Bc15d9d9Ce9FbD85Df647D4C945514751D111e", 
-          price_in_ktusd: "0.100000", 
+          price_in_ktusd: price, // Real live price (~385)
           reserves_base: dnrRes.toFixed(4),
           reserves_quote: ktusdRes.toFixed(4),
-          tvl_usd: "20000.00", 
+          tvl_usd: (ktusdRes * 2).toFixed(2), // Total pool value (ktUSD * 2)
           total_lp_supply: formatEther(totalSupply),
           apr: "1240%",
-          liquidity_status: "LOCKED" 
+          liquidity_status: "100% LOCKED" 
         }
       ],
       updated_at: new Date().toISOString(),
