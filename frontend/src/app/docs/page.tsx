@@ -74,7 +74,7 @@ export default function DocsPage() {
                     <div className="mt-8 p-6 rounded-2xl bg-black/40 border border-white/5 space-y-4">
                         <div className="flex items-center gap-2 text-xs font-mono text-cyan-500">
                             <Info className="w-4 h-4" />
-                            <span>ALGORITHMIC LOGIC</span>
+                            <span>SOVEREIGN ENGINE</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1">

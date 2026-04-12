@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "KortanaDEX | Premier Algorithmic Exchange",
+  title: "KortanaDEX | Advanced Sovereign Exchange",
   description: "Swap, Mint, and Farm on the flagship decentralized exchange of the Kortana Network. Optimized for 100% EVM compatibility and deep liquidity.",
 };
 

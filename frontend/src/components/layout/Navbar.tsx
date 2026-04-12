@@ -25,7 +25,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-2">
             <div className="relative w-9 h-9 flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] opacity-20 blur-md rounded-lg"></div>
-              <img src="/logo.png" alt="Kortana" className="w-9 h-9 object-contain relative z-10" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); e.currentTarget.nextElementSibling?.classList.add('flex') }} />
+              <img src="/website-logo.png" alt="Kortana" className="w-9 h-9 object-contain relative z-10" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); e.currentTarget.nextElementSibling?.classList.add('flex') }} />
               <div className="hidden w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]">
                 K
               </div>
