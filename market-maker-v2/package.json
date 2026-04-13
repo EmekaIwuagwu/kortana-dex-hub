@@ -1,0 +1,13 @@
+{
+  "name": "kortana-market-maker",
+  "version": "2.0.0",
+  "description": "24/7 Sovereign Heartbeat for KortanaDEX",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ethers": "^6.11.1",
+    "dotenv": "^16.4.5"
+  }
+}
