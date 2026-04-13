@@ -13,7 +13,7 @@ async function main() {
   console.log("--------------------------------");
   console.log("Operator:", deployer.address);
   console.log("Target Volume: $1,000,000 (Maintenance Mode)");
-  
+
   let totalVolumeUSD = 304778; // Starting from current live total
   let txCount = 0;
 
@@ -34,11 +34,11 @@ async function main() {
         await tx.wait();
         process.stdout.write(`✅\n`);
       } else {
-        const ktusdToSell = (Math.random() * 800 + 200).toFixed(0); 
+        const ktusdToSell = (Math.random() * 800 + 200).toFixed(0);
         const ktusdWei = ethers.parseUnits(ktusdToSell, 18);
-        
+
         process.stdout.write(`[TX #${txCount}] Organic Sell: ${ktusdToSell} ktUSD ($${ktusdToSell})... `);
-        
+
         const tx = await DEX.swapExactKTUSDForDNR(ktusdWei, 0, deployer.address, {
           gasLimit: 500000
         });

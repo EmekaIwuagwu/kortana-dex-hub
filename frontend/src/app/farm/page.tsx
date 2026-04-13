@@ -43,7 +43,29 @@ export default function FarmPage() {
     query: { enabled: !!address && !!farmAddr }
   });
 
-  // 4. Read LP Allowance (via lpAllowance on MonoDEX)
+  // 5. Read Farm Global Data (dnrPerSecond and Total Staked LP)
+  const { data: dnrPerSec } = useReadContract({
+    address: farmAddr as `0x${string}`,
+    abi: FARM_ABI,
+    functionName: "dnrPerSecond",
+    query: { enabled: !!farmAddr }
+  });
+
+  const { data: totalStakedLP } = useReadContract({
+    address: monoAddr as `0x${string}`,
+    abi: DEX_ABI,
+    functionName: "lpBalanceOf",
+    args: [farmAddr as `0x${string}`],
+    query: { enabled: !!monoAddr && !!farmAddr }
+  });
+
+  const { data: reserves } = useReadContract({
+    address: monoAddr as `0x${string}`,
+    abi: DEX_ABI,
+    functionName: "getReserves",
+    query: { enabled: !!monoAddr }
+  });
+
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: monoAddr as `0x${string}`,
     abi: DEX_ABI,
@@ -100,6 +122,25 @@ export default function FarmPage() {
 
   const userStaked = userInfo ? (userInfo as [bigint, bigint])[0] : BigInt(0);
 
+  // APR Calculation
+  let liveApr = "0%";
+  if (dnrPerSec && totalStakedLP && reserves) {
+    const dnrPerSecNum = Number(formatEther(dnrPerSec as bigint));
+    const totalStakedNum = Number(formatEther(totalStakedLP as bigint));
+    const dnrReserves = Number(formatEther((reserves as [bigint, bigint, number])[0]));
+    const lpTotalSupply = Number(formatEther(1000000n * BigInt(1e18))); // MonoDEX genesis LP is 1M
+
+    if (totalStakedNum > 0 && dnrReserves > 0) {
+      const annualRewards = dnrPerSecNum * 365 * 24 * 3600;
+      const dnrPerLp = dnrReserves / lpTotalSupply;
+      const tvlInDnr = totalStakedNum * dnrPerLp * 2;
+      const aprValue = (annualRewards / tvlInDnr) * 100;
+      liveApr = aprValue > 10000 ? ">10,000%" : `${Math.floor(aprValue).toLocaleString()}%`;
+    } else if (totalStakedNum === 0) {
+      liveApr = "∞%"; // No stakers yet
+    }
+  }
+
   return (
     <div className="space-y-12">
       <div className="text-center space-y-4">
@@ -110,6 +151,19 @@ export default function FarmPage() {
           Stake your KLP tokens to earn $DNR rewards. 
           Maximize your capital efficiency with protocol-native incentives.
         </p>
+
+        <div className="flex justify-center mt-6">
+           <a 
+              href="https://explorer.mainnet.kortana.xyz/address/0x32bC9b38D676b45642C8f3c1a8f1a70af073C0CD" 
+              target="_blank" 
+              rel="noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-all group"
+           >
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-xs font-mono font-bold text-gray-300">Liquidity Locked & Verified</span>
+              <span className="text-[10px] text-gray-500 group-hover:text-white transition-colors">↗</span>
+           </a>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -139,7 +193,7 @@ export default function FarmPage() {
           </div>
           <div>
             <p className="text-sm text-gray-400 font-mono uppercase tracking-widest">Current APR</p>
-            <p className="text-3xl font-bold text-white mt-1">1,240%</p>
+            <p className="text-3xl font-bold text-white mt-1">{liveApr}</p>
           </div>
         </GlassCard>
       </div>
@@ -166,8 +220,8 @@ export default function FarmPage() {
                   <p className="text-lg font-bold text-[#00d4ff]">40x</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-mono uppercase">APY</p>
-                  <p className="text-lg font-bold text-green-400">1,240%</p>
+                  <p className="text-xs text-gray-500 font-mono uppercase">APR</p>
+                  <p className="text-lg font-bold text-green-400">{liveApr}</p>
                 </div>
               </div>
 

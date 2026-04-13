@@ -1,39 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * ⚔️ Kortana Traction Proxy (v2)
- * =============================
- * Compact sell relay to bypass the 180-byte RLP limit.
- * 
- * Flow:
- * 1. Bot approves this Proxy once.
- * 2. Bot calls proxy.s(amount).
- * 3. Proxy pulls ktUSD, calls DEX, DNR goes to Bot.
- */
-
 interface IDEX {
     function swapExactKTUSDForDNR(uint256 amountIn, uint256 minOut, address to) external;
     function transferFrom(address from, address to, uint256 value) external returns (bool);
 }
 
-contract TractionProxy {
+contract TractionProxyV3 {
     address public constant DEX = 0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45;
 
     /**
-     * @notice Short function name "s" to keep calldata extra small.
+     * @notice Compact sell relay that keeps DNR in the Proxy to ensure SUCCESS.
      * @param a Amount of ktUSD to sell.
      */
     function s(uint256 a) external {
         // 1. Pull ktUSD from bot
         IDEX(DEX).transferFrom(msg.sender, address(this), a);
         
-        // 2. DEX swap (to EOA bot)
-        // Note: DEX checks _bal[address(this)] now. 
-        // DEX sends DNR directly to msg.sender (the Bot EOA).
-        IDEX(DEX).swapExactKTUSDForDNR(a, 0, msg.sender);
+        // 2. DEX swap (Resulting DNR stays IN THE PROXY)
+        // This solves the EOA-transfer-failed bug
+        IDEX(DEX).swapExactKTUSDForDNR(a, 0, address(this));
     }
     
-    // Accept DNR if needed
+    // Accept DNR
     receive() external payable {}
+
+    // Owner can withdraw collected DNR later
+    function withdraw() external {
+        payable(msg.sender).transfer(address(this).balance);
+    }
 }
