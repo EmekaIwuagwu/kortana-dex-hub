@@ -1,11 +1,11 @@
 /**
- * KortanaDEX Market Maker — Production v8.0 (Bullish Volume Engine)
+ * KortanaDEX Market Maker — Production v8.1 (Bullish Power Engine)
  * =======================================================================
  * Features:
- *  - HIGH FREQUENCY: Trades every 2-5 minutes for massive volume.
- *  - WHALE BUYS: Buys 3.0 to 10.0 DNR to push the price aggressively UP.
- *  - ORGANIC SELLS: 35% chance of small 10-25% balance sells to look real.
- *  - PROXY RELAY: Bypasses all Kortana RPC size limits.
+ *  - HIGH FREQUENCY: 2-5 min trades.
+ *  - WHALE BUYS: 3.0 to 10.0 DNR.
+ *  - ROBUST SELLS: Boosted gas (500k) for Proxy Relay.
+ *  - SMART APPROVAL: Boosted gas (200k) for high-reliability.
  */
 "use strict";
 const { ethers } = require("ethers");
@@ -20,13 +20,13 @@ const PROXY        = "0x1D0E141610784A3f9350ac1FF7ca1b307b933f6A";
 const GAS_PRICE    = 3n;       
 const GAS_LIMIT    = 400_000;  
 
-const BUY_CHANCE   = 0.65; // Bias for Green 
+const BUY_CHANCE   = 0.65; 
 
-const MIN_DNR      = 3.0;  // HIGH VOLUME WHALE BUYS
+const MIN_DNR      = 3.0; 
 const MAX_DNR      = 10.0; 
 
-const MIN_MS       = 2 * 60_000; // 2 min min
-const MAX_MS       = 5 * 60_000; // 5 min max
+const MIN_MS       = 2 * 60_000; 
+const MAX_MS       = 5 * 60_000;
 
 const ABI = [
   "function swapExactDNRForKTUSD(uint256 minOut18, address to) external payable",
@@ -55,10 +55,9 @@ async function main() {
   }).listen(process.env.PORT || 10000);
 
   console.log("╔══════════════════════════════════════════════╗");
-  console.log("║   KortanaDEX Market Maker — Version 8.0      ║");
-  console.log("║   [ The Bullish High-Frequency Engine ]      ║");
+  console.log("║   KortanaDEX Market Maker — Version 8.1      ║");
+  console.log("║   [ The Robust Bullish Volume Engine ]       ║");
   console.log("╚══════════════════════════════════════════════╝");
-  console.log(`  Target: High Volume & Constant Price Growth`);
   console.log(`  Strategy: 65% Whale-Buys | 35% Organic-Sells`);
   console.log("───────────────────────────────────────────────");
 
@@ -67,6 +66,7 @@ async function main() {
   while (true) {
     cycle++;
     
+    // Pick a random trader
     const randomKey = PRIVATE_KEYS[Math.floor(Math.random() * PRIVATE_KEYS.length)];
     const wallet = new ethers.Wallet(randomKey, provider);
     const dex = new ethers.Contract(DEX, ABI, wallet);
@@ -80,54 +80,49 @@ async function main() {
       const isBuy = Math.random() < BUY_CHANCE;
 
       if (isBuy) {
-        // ── WHALE BUY 🐳 ──────────────────────────────────────────────────
+        // ── WHALE BUY 🟢 ──────────────────────────────────────────────────
         const dnrBal = await provider.getBalance(wallet.address);
         if (dnrBal < ethers.parseEther("15.0")) continue;
 
         const buyDNR = rand(MIN_DNR, MAX_DNR).toFixed(4);
         const buyValue = ethers.parseEther(buyDNR);
-        console.log(`  🏹 🟢 WHALE BUY : Spending ${buyDNR} DNR to boost price`);
+        console.log(`  🏹 🟢 WHALE BUY : Spending ${buyDNR} DNR to pump price`);
 
         const tx = await dex.swapExactDNRForKTUSD(0, wallet.address, {
           value: buyValue, gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Price Up.`);
+        console.log(`     ✅ Success! Hash: ${tx.hash.slice(0,20)}...`);
 
       } else {
-        // ── ORGANIC SELL 🐟 ────────────────────────────────────────────────
+        // ── ORGANIC SELL 🔴 ───────────────────────────────────────────────
         const ktBal = await dex.balanceOf(wallet.address);
-        if (ktBal < ethers.parseEther("10.0")) {
-            // Fallback to buy if no ktUSD
-            const buyDNR = rand(1.0, 3.0).toFixed(4);
-            const tx = await dex.swapExactDNRForKTUSD(0, wallet.address, {
-                value: ethers.parseEther(buyDNR), gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
-            });
-            await tx.wait();
-            console.log(`     ✅ Fallback Buy Success!`);
-            continue;
-        }
+        if (ktBal < ethers.parseEther("5.0")) continue;
 
         const sellAmt = ktBal * BigInt(Math.floor(rand(10, 25))) / 100n;
         console.log(`  🏹 🔴 ORGANIC SELL : Trading ${fmt(sellAmt)} ktUSD for DNR`);
 
         const allowance = await dex.allowance(wallet.address, PROXY);
         if (allowance < sellAmt) {
-          console.log(`     🔓 Approving Proxy...`);
-          const appTx = await dex.approve(PROXY, ethers.MaxUint256, { gasPrice: GAS_PRICE, gasLimit: 100000, type: 0 });
+          console.log(`     🔓 Approving Proxy (Boosted Gas)...`);
+          const appTx = await dex.approve(PROXY, ethers.MaxUint256, { 
+            gasPrice: GAS_PRICE, gasLimit: 200000, type: 0 
+          });
           await appTx.wait();
+          console.log(`     🔓 Approved.`);
         }
 
         const tx = await proxy.s(sellAmt, {
-          gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
+          gasLimit: 600000, // Even more gas for the complex proxy logic
+          gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Gas used: ${tx.gasLimit}`);
+        console.log(`     ✅ Success! Hash: ${tx.hash.slice(0,20)}...`);
       }
 
     } catch (err) {
       console.error(`  ⚠ Cycle Pause: ${err.message?.slice(0, 100)}`);
-      await sleep(10000); // 10s backoff
+      await sleep(10000); // 10s wait before retry
     }
   }
 }
