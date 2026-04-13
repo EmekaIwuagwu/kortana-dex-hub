@@ -2,15 +2,15 @@ const { ethers } = require("hardhat");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
-    console.log("Deploying KortanaSellProxy from:", deployer.address);
+    console.log("Deploying KortanaDNRWithdrawWrapper from:", deployer.address);
 
-    const Proxy = await ethers.getContractFactory("KortanaSellProxy");
-    const proxy = await Proxy.deploy();
-    await proxy.waitForDeployment();
+    const Wrapper = await ethers.getContractFactory("KortanaDNRWithdrawWrapper");
+    const wrapper = await Wrapper.deploy();
+    await wrapper.waitForDeployment();
 
-    const addr = await proxy.getAddress();
-    console.log("✅ KortanaSellProxy deployed to:", addr);
-    console.log("DEX hardcoded:", await proxy.DEX());
+    const addr = await wrapper.getAddress();
+    console.log("✅ KortanaDNRWithdrawWrapper deployed to:", addr);
+    console.log("DEX hardcoded:", await wrapper.DEX());
     return addr;
 }
 
