@@ -4,16 +4,10 @@ require("dotenv").config();
 // KORTANA MONODEX MAINNET CONFIG
 const RPC_URL = process.env.RPC_URL || "https://zeus-rpc.mainnet.kortana.xyz";
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-
-// Official Mainnet Addresses
 const DEX_ADDRESS = ethers.getAddress("0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45".toLowerCase());
-const WDNR_ADDRESS = ethers.getAddress("0xF08ef4987108dD4AEE330Da1255CD0D7CaBEd0a3".toLowerCase());
 
-// Trading Settings
-const MIN_DELAY = 120000; // 2 minutes
-const MAX_DELAY = 600000; // 10 minutes
-const MIN_TRADE = "0.50"; 
-const MAX_TRADE = "5.00";
+const MIN_DELAY = 180000; // 3 mins
+const MAX_DELAY = 900000; // 15 mins
 
 async function runBot() {
     if (!PRIVATE_KEY) {
@@ -24,66 +18,54 @@ async function runBot() {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
     
-    // MonoDEX ABI (Matching your frontend)
     const dexAbi = [
         "function swapExactDNRForKTUSD(uint256 minOut18, address to) external payable",
         "function swapExactKTUSDForDNR(uint256 amountIn18, uint256 minOut18, address to) external",
-        "function balanceOf(address account) external view returns (uint256)",
-        "function approve(address spender, uint256 amount) external returns (bool)"
+        "function balanceOf(address account) external view returns (uint256)"
     ];
 
     const dex = new ethers.Contract(DEX_ADDRESS, dexAbi, wallet);
 
-    console.log("🦁 KORTANA MONO-HEARTBEAT ACTIVATED");
+    console.log("🦁 KORTANA SOVEREIGN-SOLID HEARTBEAT v2.3");
     console.log(`📡 Wallet: ${wallet.address}`);
 
-    // Health Check Server
+    // Anti-Sleep Server
     const http = require("http");
     http.createServer((req, res) => {
         res.writeHead(200);
-        res.end("MONODEX_HEARTBEAT_HEALTHY");
-    }).listen(process.env.PORT || 3000);
+        res.end("SOVEREIGN_HEARTBEAT_HEALTHY");
+    }).listen(process.env.PORT || 10000);
 
     while (true) {
         try {
-            const isBuy = Math.random() > 0.45; 
-            const amount = (Math.random() * (parseFloat(MAX_TRADE) - parseFloat(MIN_TRADE)) + parseFloat(MIN_TRADE)).toFixed(4);
-            const amountInWei = ethers.parseEther(amount);
-
+            const isBuy = Math.random() > 0.40; // 60% Buy bias for healthy chart growth
+            
             if (isBuy) {
-                console.log(`🏹 Mono-Buy: ${amount} DNR...`);
-                // swapExactDNRForKTUSD(minOut, to)
-                const tx = await dex.swapExactDNRForKTUSD(
-                    0, 
-                    wallet.address, 
-                    { value: amountInWei, gasLimit: 500000 }
-                );
-                await tx.wait();
-                console.log(`✅ Buy Success: ${tx.hash}`);
+                const buyAmount = (Math.random() * 4 + 1).toFixed(4); // 1-5 DNR
+                console.log(`🏹 Buying ${buyAmount} DNR...`);
+                const tx = await dex.swapExactDNRForKTUSD(0, wallet.address, { 
+                    value: ethers.parseEther(buyAmount)
+                });
+                const receipt = await tx.wait();
+                console.log(`✅ Buy Success: ${receipt.hash}`);
             } else {
                 const balance = await dex.balanceOf(wallet.address);
-                if (balance > 0n) {
-                    console.log(`⚓ Mono-Sell: ktUSD balance detected...`);
-                    const sellAmount = balance / 3n;
-                    if (sellAmount > 1000000000000000n) {
-                        console.log(`⚓ Selling ${ethers.formatEther(sellAmount)} ktUSD...`);
-                        
-                        const tx = await dex.swapExactKTUSDForDNR(
-                            sellAmount,
-                            0,
-                            wallet.address,
-                            { gasLimit: 10000000 }
-                        );
-                        await tx.wait();
-                        console.log(`✅ Sell Success: ${tx.hash}`);
-                    }
+                if (balance > ethers.parseEther("51")) {
+                    console.log(`⚓ Selling 50.0 ktUSD (Safe-Sized Burst)...`);
+                    const tx = await dex.swapExactKTUSDForDNR(
+                        ethers.parseEther("50.0"), 
+                        0, 
+                        wallet.address,
+                        { gasLimit: 5000000 } // Ample gas for rebase math
+                    );
+                    const receipt = await tx.wait();
+                    console.log(`✅ Sell Success: ${receipt.hash}`);
+                } else {
+                    console.log("⏳ Waiting for ktUSD balance to accumulate...");
                 }
             }
         } catch (error) {
-            console.error(`❌ Trade Failed: ${error.message}`);
-            if (error.reason) console.error(`Reason: ${error.reason}`);
-            console.log("Retrying in 30s...");
-            await new Promise(r => setTimeout(r, 30000));
+            console.error(`❌ Cycle Interrupted: ${error.message}`);
         }
 
         const nextDelay = Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY) + MIN_DELAY);
