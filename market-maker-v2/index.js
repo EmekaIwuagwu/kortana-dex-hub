@@ -68,11 +68,17 @@ async function runBot() {
                     const sellAmount = balance / 3n; // Sell 33% of ktUSD balance
                     if (sellAmount > 1000000000000000n) { // Min 0.001 ktUSD
                         console.log(`⚓ Selling ${ethers.formatEther(sellAmount)} ktUSD...`);
+                        
+                        // Security Step: Approve the DEX to spend the token (Even if it is the same contract)
+                        console.log("🔓 Approving ktUSD...");
+                        const appTx = await dex.approve(DEX_ADDRESS, sellAmount);
+                        await appTx.wait();
+
                         const tx = await dex.swapExactKTUSDForDNR(
                             sellAmount,
                             0,
                             wallet.address,
-                            { gasLimit: 1000000 }
+                            { gasLimit: 3000000 }
                         );
                         await tx.wait();
                         console.log(`✅ Sell Success: ${tx.hash}`);
