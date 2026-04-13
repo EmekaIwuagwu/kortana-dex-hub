@@ -1,11 +1,10 @@
 /**
- * KortanaDEX Market Maker — Production v8.1 (Bullish Power Engine)
+ * KortanaDEX Market Maker — Production v8.2 (Robust Micro-Battle Engine)
  * =======================================================================
  * Features:
- *  - HIGH FREQUENCY: 2-5 min trades.
- *  - WHALE BUYS: 3.0 to 10.0 DNR.
- *  - ROBUST SELLS: Boosted gas (500k) for Proxy Relay.
- *  - SMART APPROVAL: Boosted gas (200k) for high-reliability.
+ *  - MICRO-SELLS: Keeps sells tiny to avoid hitting the Liquidity Wall.
+ *  - WHALE BUYS: Continues to pump DNR into the pool to grow liquidity.
+ *  - PROXY RELAY: Bypass RLP limits.
  */
 "use strict";
 const { ethers } = require("ethers");
@@ -18,22 +17,23 @@ const DEX          = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45";
 const PROXY        = "0x1D0E141610784A3f9350ac1FF7ca1b307b933f6A"; 
 
 const GAS_PRICE    = 3n;       
-const GAS_LIMIT    = 400_000;  
+const GAS_LIMIT    = 500_000;  
 
-const BUY_CHANCE   = 0.65; 
+const BUY_CHANCE   = 0.75; // 75% Buy to build pool fast
 
-const MIN_DNR      = 3.0; 
-const MAX_DNR      = 10.0; 
+const MIN_DNR      = 2.0; 
+const MAX_DNR      = 6.0; 
 
 const MIN_MS       = 2 * 60_000; 
-const MAX_MS       = 5 * 60_000;
+const MAX_MS       = 6 * 60_000;
 
 const ABI = [
   "function swapExactDNRForKTUSD(uint256 minOut18, address to) external payable",
   "function balanceOf(address) external view returns (uint256)",
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)",
-  "function s(uint256 amount) external" 
+  "function s(uint256 amount) external",
+  "function getReserves() external view returns (uint112, uint112, uint32)"
 ];
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -51,22 +51,19 @@ async function main() {
   // Health-check server
   require("http").createServer((req, res) => {
     res.writeHead(200);
-    res.end("Kortana Bullish Volume Bot ONLINE");
+    res.end("Kortana Micro-Battle Bot ONLINE");
   }).listen(process.env.PORT || 10000);
 
   console.log("╔══════════════════════════════════════════════╗");
-  console.log("║   KortanaDEX Market Maker — Version 8.1      ║");
-  console.log("║   [ The Robust Bullish Volume Engine ]       ║");
+  console.log("║   KortanaDEX Market Maker — Version 8.2      ║");
+  console.log("║   [ Building Liquidity & Traction ]          ║");
   console.log("╚══════════════════════════════════════════════╝");
-  console.log(`  Strategy: 65% Whale-Buys | 35% Organic-Sells`);
   console.log("───────────────────────────────────────────────");
 
   let cycle = 0;
 
   while (true) {
     cycle++;
-    
-    // Pick a random trader
     const randomKey = PRIVATE_KEYS[Math.floor(Math.random() * PRIVATE_KEYS.length)];
     const wallet = new ethers.Wallet(randomKey, provider);
     const dex = new ethers.Contract(DEX, ABI, wallet);
@@ -77,52 +74,56 @@ async function main() {
     await sleep(sleepMs);
 
     try {
-      const isBuy = Math.random() < BUY_CHANCE;
+      // BUILD POOL FIRST: Check reserves. If pool is dry, only BUY.
+      const [r0, r1] = await dex.getReserves();
+      const isDry = (r0 < ethers.parseEther("1.0")); // Less than 1 DNR in pool?
+      
+      const isBuy = isDry || (Math.random() < BUY_CHANCE);
 
       if (isBuy) {
-        // ── WHALE BUY 🟢 ──────────────────────────────────────────────────
+        // ── GREEN BAR ENGINE 🟢 ───────────────────────────────────────────
         const dnrBal = await provider.getBalance(wallet.address);
-        if (dnrBal < ethers.parseEther("15.0")) continue;
+        if (dnrBal < ethers.parseEther("10.0")) continue;
 
         const buyDNR = rand(MIN_DNR, MAX_DNR).toFixed(4);
         const buyValue = ethers.parseEther(buyDNR);
-        console.log(`  🏹 🟢 WHALE BUY : Spending ${buyDNR} DNR to pump price`);
+        console.log(`  🏹 🟢 BUY  : Spending ${buyDNR} DNR to grow pool`);
 
         const tx = await dex.swapExactDNRForKTUSD(0, wallet.address, {
           value: buyValue, gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Hash: ${tx.hash.slice(0,20)}...`);
+        console.log(`     ✅ Success! Pool: ${fmt(r0)} DNR / ${fmt(r1)} ktUSD`);
 
       } else {
-        // ── ORGANIC SELL 🔴 ───────────────────────────────────────────────
+        // ── MICRO SELL ENGINE 🔴 (Safety Optimized) ───────────────────────
         const ktBal = await dex.balanceOf(wallet.address);
-        if (ktBal < ethers.parseEther("5.0")) continue;
+        if (ktBal < ethers.parseEther("10.0")) continue;
 
-        const sellAmt = ktBal * BigInt(Math.floor(rand(10, 25))) / 100n;
-        console.log(`  🏹 🔴 ORGANIC SELL : Trading ${fmt(sellAmt)} ktUSD for DNR`);
+        // MICRO SELL: Only sell a tiny amount (0.1 to 0.5 ktUSD) 
+        // This creates the "Red Bar" without breaking the pool math.
+        const sellAmt = ethers.parseEther(rand(0.1, 0.5).toFixed(4));
+        console.log(`  🏹 🔴 MICRO-SELL : Trading ${fmt(sellAmt)} ktUSD for DNR`);
 
         const allowance = await dex.allowance(wallet.address, PROXY);
         if (allowance < sellAmt) {
-          console.log(`     🔓 Approving Proxy (Boosted Gas)...`);
+          console.log(`     🔓 Approving Proxy...`);
           const appTx = await dex.approve(PROXY, ethers.MaxUint256, { 
             gasPrice: GAS_PRICE, gasLimit: 200000, type: 0 
           });
           await appTx.wait();
-          console.log(`     🔓 Approved.`);
         }
 
         const tx = await proxy.s(sellAmt, {
-          gasLimit: 600000, // Even more gas for the complex proxy logic
-          gasPrice: GAS_PRICE, type: 0
+          gasLimit: 600000, gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Hash: ${tx.hash.slice(0,20)}...`);
+        console.log(`     ✅ Success! Organic flow achieved.`);
       }
 
     } catch (err) {
       console.error(`  ⚠ Cycle Pause: ${err.message?.slice(0, 100)}`);
-      await sleep(10000); // 10s wait before retry
+      await sleep(10000);
     }
   }
 }
