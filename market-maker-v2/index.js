@@ -1,10 +1,10 @@
 /**
- * KortanaDEX Market Maker — Production v8.2 (Robust Micro-Battle Engine)
+ * KortanaDEX Market Maker — Production v8.3 (The Magnet Edition)
  * =======================================================================
  * Features:
- *  - MICRO-SELLS: Keeps sells tiny to avoid hitting the Liquidity Wall.
- *  - WHALE BUYS: Continues to pump DNR into the pool to grow liquidity.
- *  - PROXY RELAY: Bypass RLP limits.
+ *  - PROXY V3 (Magnet): Solves the EOA-transfer-revert bug permanently.
+ *  - LIQUIDITY-AWARE: Only sells when the pool has juice.
+ *  - MICRO-BATTLE: Maintains organic volume without dry-pool reverts.
  */
 "use strict";
 const { ethers } = require("ethers");
@@ -14,15 +14,15 @@ require("dotenv").config();
 const RPC_URL      = process.env.RPC_URL    || "https://zeus-rpc.mainnet.kortana.xyz";
 const PRIVATE_KEYS = (process.env.PRIVATE_KEY || "").split(",").map(k => k.trim()).filter(k => k.length > 0);
 const DEX          = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45";
-const PROXY        = "0x1D0E141610784A3f9350ac1FF7ca1b307b933f6A"; 
+const PROXY        = "0x1C0904BEdC886F179cbDEFd18a5d2393F85CD535"; // PROXY V3 Magnet
 
 const GAS_PRICE    = 3n;       
-const GAS_LIMIT    = 500_000;  
+const GAS_LIMIT    = 800_000;  // High gas for maximum reliability
 
-const BUY_CHANCE   = 0.75; // 75% Buy to build pool fast
+const BUY_CHANCE   = 0.70; // 70% Buy / 30% Sell 
 
-const MIN_DNR      = 2.0; 
-const MAX_DNR      = 6.0; 
+const MIN_DNR      = 3.0; 
+const MAX_DNR      = 8.0; 
 
 const MIN_MS       = 2 * 60_000; 
 const MAX_MS       = 6 * 60_000;
@@ -51,13 +51,14 @@ async function main() {
   // Health-check server
   require("http").createServer((req, res) => {
     res.writeHead(200);
-    res.end("Kortana Micro-Battle Bot ONLINE");
+    res.end("Kortana Magnet Bot ONLINE");
   }).listen(process.env.PORT || 10000);
 
   console.log("╔══════════════════════════════════════════════╗");
-  console.log("║   KortanaDEX Market Maker — Version 8.2      ║");
-  console.log("║   [ Building Liquidity & Traction ]          ║");
+  console.log("║   KortanaDEX Market Maker — Version 8.3      ║");
+  console.log("║   [ The Magnet Edition — Robust Mode ]       ║");
   console.log("╚══════════════════════════════════════════════╝");
+  console.log(`  Target: Zero-Failure Organic Volume Engine`);
   console.log("───────────────────────────────────────────────");
 
   let cycle = 0;
@@ -74,16 +75,15 @@ async function main() {
     await sleep(sleepMs);
 
     try {
-      // BUILD POOL FIRST: Check reserves. If pool is dry, only BUY.
       const [r0, r1] = await dex.getReserves();
-      const isDry = (r0 < ethers.parseEther("1.0")); // Less than 1 DNR in pool?
+      const isDry = (r0 < ethers.parseEther("1.0")); // Under 1 DNR = Dry
       
       const isBuy = isDry || (Math.random() < BUY_CHANCE);
 
       if (isBuy) {
-        // ── GREEN BAR ENGINE 🟢 ───────────────────────────────────────────
+        // ── WHALE BUY (DNR Magnet) 🟢 ─────────────────────────────────────
         const dnrBal = await provider.getBalance(wallet.address);
-        if (dnrBal < ethers.parseEther("10.0")) continue;
+        if (dnrBal < ethers.parseEther("12.0")) continue;
 
         const buyDNR = rand(MIN_DNR, MAX_DNR).toFixed(4);
         const buyValue = ethers.parseEther(buyDNR);
@@ -93,37 +93,36 @@ async function main() {
           value: buyValue, gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Pool: ${fmt(r0)} DNR / ${fmt(r1)} ktUSD`);
+        console.log(`     ✅ Success! Pool Growth Recorded.`);
 
       } else {
-        // ── MICRO SELL ENGINE 🔴 (Safety Optimized) ───────────────────────
+        // ── MAGNET SELL (No Revert Mode) 🔴 ───────────────────────────────
         const ktBal = await dex.balanceOf(wallet.address);
-        if (ktBal < ethers.parseEther("10.0")) continue;
+        if (ktBal < ethers.parseEther("5.0")) continue;
 
-        // MICRO SELL: Only sell a tiny amount (0.1 to 0.5 ktUSD) 
-        // This creates the "Red Bar" without breaking the pool math.
-        const sellAmt = ethers.parseEther(rand(0.1, 0.5).toFixed(4));
-        console.log(`  🏹 🔴 MICRO-SELL : Trading ${fmt(sellAmt)} ktUSD for DNR`);
+        // Sell 0.1 to 1.0 ktUSD (Organic Micro-Red Bar)
+        const sellAmt = ethers.parseEther(rand(0.1, 1.0).toFixed(4));
+        console.log(`  🏹 🔴 SELL : Trading ${fmt(sellAmt)} ktUSD for DNR (Proxy V3)`);
 
         const allowance = await dex.allowance(wallet.address, PROXY);
         if (allowance < sellAmt) {
-          console.log(`     🔓 Approving Proxy...`);
+          console.log(`     🔓 Approving Magnet Proxy...`);
           const appTx = await dex.approve(PROXY, ethers.MaxUint256, { 
-            gasPrice: GAS_PRICE, gasLimit: 200000, type: 0 
+            gasPrice: GAS_PRICE, gasLimit: 250000, type: 0 
           });
           await appTx.wait();
         }
 
         const tx = await proxy.s(sellAmt, {
-          gasLimit: 600000, gasPrice: GAS_PRICE, type: 0
+          gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0
         });
         await tx.wait();
-        console.log(`     ✅ Success! Organic flow achieved.`);
+        console.log(`     ✅ Success! Organic Red Bar Printed.`);
       }
 
     } catch (err) {
-      console.error(`  ⚠ Cycle Pause: ${err.message?.slice(0, 100)}`);
-      await sleep(10000);
+      console.error(`  ⚠ Warning: ${err.message?.slice(0, 100)}`);
+      await sleep(15000); // 15s wait
     }
   }
 }
