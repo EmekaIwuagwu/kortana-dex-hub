@@ -72,7 +72,7 @@ async function runBot() {
                             sellAmount,
                             0,
                             wallet.address,
-                            { gasLimit: 500000 }
+                            { gasLimit: 1000000 }
                         );
                         await tx.wait();
                         console.log(`✅ Sell Success: ${tx.hash}`);
