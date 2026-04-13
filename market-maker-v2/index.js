@@ -57,7 +57,7 @@ async function main() {
   console.log("╔══════════════════════════════════════════════╗");
   console.log("║   KortanaDEX Market Maker — Version 7.0      ║");
   console.log("║   [ The Organic Battle Volume Engine ]       ║");
-  ╚══════════════════════════════════════════════╝");
+  console.log("╚══════════════════════════════════════════════╝");
   console.log(`  Wallets Loaded: ${PRIVATE_KEYS.length} | Strategy: 65% Buy / 35% Sell`);
   console.log("───────────────────────────────────────────────");
 
