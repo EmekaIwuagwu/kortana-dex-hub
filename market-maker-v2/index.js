@@ -4,10 +4,10 @@ require("dotenv").config();
 // CONFIGURATION
 const RPC_URL = process.env.RPC_URL || "https://zeus-rpc.mainnet.kortana.xyz";
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const PAIR_ADDRESS = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45";
-const ROUTER_ADDRESS = "0xDEE4B2beBA0f0b40Ff70C579c8dD8b0fA9A060C3";
-const ktUSD_ADDRESS = "0xB2Bc15d9d9Ce9FbD85Df647D4C945514751D111e";
-const WDNR_ADDRESS = "0xF08ef4987108dD4AEE330Da1255CD0D7CaBEd0a3";
+const PAIR_ADDRESS = ethers.getAddress("0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45");
+const ROUTER_ADDRESS = ethers.getAddress("0xDEE4B2beBA0f0b40Ff70C579c8dD8b0fA9A060C3");
+const ktUSD_ADDRESS = ethers.getAddress("0xB2Bc15d9d9Ce9FbD85Df647D4C945514751D111e");
+const WDNR_ADDRESS = ethers.getAddress("0xF08ef4987108dD4AEE330Da1255CD0D7CaBEd0a3");
 
 // Trading Settings
 const MIN_DELAY = 120000; // 2 minutes
