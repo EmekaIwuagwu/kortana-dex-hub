@@ -2,15 +2,14 @@ const { ethers } = require("hardhat");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
-    console.log("Deploying KortanaDNRWithdrawWrapper from:", deployer.address);
+    console.log("Deploying TractionProxy from:", deployer.address);
 
-    const Wrapper = await ethers.getContractFactory("KortanaDNRWithdrawWrapper");
-    const wrapper = await Wrapper.deploy();
-    await wrapper.waitForDeployment();
+    const Factory = await ethers.getContractFactory("TractionProxy");
+    const proxy = await Factory.deploy();
+    await proxy.waitForDeployment();
 
-    const addr = await wrapper.getAddress();
-    console.log("✅ KortanaDNRWithdrawWrapper deployed to:", addr);
-    console.log("DEX hardcoded:", await wrapper.DEX());
+    const addr = await proxy.getAddress();
+    console.log("✅ TractionProxy deployed to:", addr);
     return addr;
 }
 
