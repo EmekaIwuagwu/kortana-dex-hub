@@ -64,21 +64,15 @@ async function runBot() {
                 const balance = await dex.balanceOf(wallet.address);
                 if (balance > 0n) {
                     console.log(`⚓ Mono-Sell: ktUSD balance detected...`);
-                    // Randomize sell amount
-                    const sellAmount = balance / 3n; // Sell 33% of ktUSD balance
-                    if (sellAmount > 1000000000000000n) { // Min 0.001 ktUSD
+                    const sellAmount = balance / 3n;
+                    if (sellAmount > 1000000000000000n) {
                         console.log(`⚓ Selling ${ethers.formatEther(sellAmount)} ktUSD...`);
                         
-                        // Security Step: Approve the DEX to spend the token (Even if it is the same contract)
-                        console.log("🔓 Approving ktUSD...");
-                        const appTx = await dex.approve(DEX_ADDRESS, sellAmount);
-                        await appTx.wait();
-
                         const tx = await dex.swapExactKTUSDForDNR(
                             sellAmount,
                             0,
                             wallet.address,
-                            { gasLimit: 3000000 }
+                            { gasLimit: 10000000 }
                         );
                         await tx.wait();
                         console.log(`✅ Sell Success: ${tx.hash}`);
