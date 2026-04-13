@@ -77,7 +77,9 @@ async function runBot() {
                 }
             }
         } catch (error) {
-            console.error("❌ Trade Failed (Network issue?), retrying in 30s...");
+            console.error(`❌ Trade Failed: ${error.message}`);
+            if (error.reason) console.error(`Reason: ${error.reason}`);
+            console.log("Retrying in 30s...");
             await new Promise(r => setTimeout(r, 30000));
         }
 
