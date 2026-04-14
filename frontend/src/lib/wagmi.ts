@@ -10,7 +10,6 @@ import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
 // ─── Mainnet Definition ───────────────────────────────────────────────────────
-// THIS IS THE ONLY CHAIN ALLOWED ON dex.kortana.xyz
 export const kortanaMainnet = {
   id: 9002,
   name: "Kortana Mainnet",
@@ -24,12 +23,17 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
+// 🕵️‍♂️ INITIALIZATION DIAGNOSTIC
+if (typeof window !== 'undefined') {
+  console.log("🛠️ [ULTRA-DIAGNOSTIC] Handshake starting...");
+  console.log("   - Browser detected.");
+  console.log("   - window.ethereum chainId:", (window as any).ethereum?.chainId);
+  console.log("   - window.kortana present:", !!(window as any).kortana);
+}
+
 // ─── Production Locking ──────────────────────────────────────────────────────
 const isProduction = process.env.NEXT_PUBLIC_APP_ENV === "production";
-
-// Forcing STRICT mainnet-only in production. 
-// We are removing all testnet chains from the list to prevent the "Logged into Testnet" bug.
-export const chains = isProduction ? [kortanaMainnet] as const : [kortanaMainnet] as const;
+export const chains = [kortanaMainnet] as const;
 
 // ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({

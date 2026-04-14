@@ -4,36 +4,43 @@ import { useAccount } from "wagmi";
 import { useEffect, useState } from "react";
 
 export function NetworkEnforcer() {
-  const { isConnected, chainId: accountChainId } = useAccount();
+  const { isConnected, chainId: accountChainId, address } = useAccount();
   const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
+    console.log("🛰️ [SENTINEL] NetworkEnforcer Mounted.");
+    console.log("   - isConnected:", isConnected);
+    console.log("   - Wallet Address:", address);
+    console.log("   - accountChainId:", accountChainId);
+  }, [isConnected, address, accountChainId]);
+
+  useEffect(() => {
     const enforceMainnet = async () => {
-      // 🛡️ ZERO TOLERANCE: Any ID that isn't 9002 is considered "The Wrong Network"
       if (isConnected && accountChainId !== 9002 && !isSwitching) {
         setIsSwitching(true);
-        console.warn("🛡️ Superman Zero-Tolerance Guard: Forcing switch to Mainnet (9002)...");
+        console.warn("🛡️ [SENTINEL] TRIGGER: Wrong Network detected.");
         
         if (typeof window !== 'undefined' && (window as any).ethereum) {
            try {
-              // We use Direct AddChain to force the wallet to recognize the Mainnet params
+              console.log("⚡ [SENTINEL] Attempting Force-Add (wallet_addEthereumChain)...");
               await (window as any).ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
-                  chainId: '0x232a', // 9002 in Hex
+                  chainId: '0x232a', // 9002
                   chainName: 'Kortana Mainnet',
                   nativeCurrency: { name: 'DNR', symbol: 'DNR', decimals: 18 },
                   rpcUrls: ['https://zeus-rpc.mainnet.kortana.xyz'],
                   blockExplorerUrls: ['https://explorer.mainnet.kortana.xyz'],
                 }],
               });
-              console.log("✅ Mainnet Switch Request sent.");
+              console.log("✅ [SENTINEL] Force-Add success. User should be on 9002.");
            } catch (e: any) {
-              console.error("❌ Force Switch Failed:", e.message);
+              console.error("❌ [SENTINEL] Force-Add Failed:", e.message);
            } finally {
-              // Wait 5 seconds before allowing another attempt to prevent spamming popups
-              setTimeout(() => setIsSwitching(false), 5000);
+              setTimeout(() => setIsSwitching(false), 8000);
            }
+        } else {
+            console.error("❌ [SENTINEL] window.ethereum not found!");
         }
       }
     };
