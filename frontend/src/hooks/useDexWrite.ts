@@ -21,8 +21,6 @@ export function useDexWrite() {
     
     try {
       // 🦸‍♂️ SUPERMAN CLOAKING MANEUVER:
-      // We explicitly bypass the library's chain validation by pre-fetching 
-      // the nonce and gasPrice ourselves.
       const nonce = await publicClient.getTransactionCount({ address: walletClient.account.address });
       const gasPrice = await publicClient.getGasPrice();
 
@@ -38,9 +36,7 @@ export function useDexWrite() {
         gasPrice,
         nonce,
         type: "legacy",
-        // 🛡️ THE CLOAK: By setting the chain to undefined here, we stop viem 
-        // from injecting the 9002 ID into the wallet's internal Ethers context.
-        chain: undefined, 
+        chain: undefined, // 🛡️ THE CLOAK
       } as any);
 
       toast.loading("Transaction pending...", { id: hash });
@@ -66,5 +62,14 @@ export function useDexWrite() {
       
     swapKTUSDForDNR: (ktUSDAmount: string, minOut: bigint, to: `0x${string}`) =>
       executeTx("swapExactKTUSDForDNR", [parseEther(ktUSDAmount), minOut, to], BigInt(0), "Swap successful"),
+
+    addLiquidity: (amountKTUSD: bigint, minKTUSD: bigint, minDNR: bigint, to: `0x${string}`, valueDNR: bigint) =>
+      executeTx("addLiquidity", [amountKTUSD, minKTUSD, minDNR, to], valueDNR, "Liquidity added"),
+
+    removeLiquidity: (lpAmount: bigint, minKTUSD: bigint, minDNR: bigint, to: `0x${string}`) =>
+      executeTx("removeLiquidity", [lpAmount, minKTUSD, minDNR, to], BigInt(0), "Liquidity removed"),
+
+    mintCollateralized: (ktUSDAmount: bigint, to: `0x${string}`, dnrCollateral: bigint) =>
+      executeTx("mintWithCollateral", [ktUSDAmount, to], dnrCollateral, "ktUSD minted"),
   };
 }
