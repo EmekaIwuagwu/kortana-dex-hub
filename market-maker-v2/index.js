@@ -60,19 +60,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rand  = (lo, hi) => Math.random() * (hi - lo) + lo;
 const fmt   = n => Number(ethers.formatEther(n)).toFixed(4);
 
-// ── Ensure ktUSD Approval ─────────────────────────────────────────────────
-async function ensureApproval(dex, wallet, amountNeeded) {
-  const owner   = wallet.address;
-  const spender = DEX;
-  const current = await dex.allowance(owner, spender);
-  if (current >= amountNeeded) return; // Already approved
-  console.log(`     🔓 Approving ktUSD for DEX...`);
-  const tx = await dex.approve(spender, ethers.MaxUint256, {
-    gasPrice: GAS_PRICE, gasLimit: 150_000, type: 0,
-  });
-  await tx.wait();
-  console.log(`     ✅ Approval confirmed.`);
-}
+// Note: swapExactKTUSDForDNR checks _bal[msg.sender] directly — no approval needed.
+// The approve() function only affects transferFrom() which this swap doesn't use.
 
 // ── Main Loop ─────────────────────────────────────────────────────────────
 async function main() {
@@ -147,11 +136,9 @@ async function main() {
 
         console.log(`  🏹 🟢 BUY DNR : Spending ${buyAmount.toFixed(2)} ktUSD → Getting DNR (price UP ↑)`);
 
-        await ensureApproval(dex, wallet, buyAmountWei);
-
-        const tx = await dex.swapExactKTUSDForDNR(buyAmountWei, 0, wallet.address, {
-          gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0,
-        });
+        // ⚡ No approval needed — swapExactKTUSDForDNR deducts from internal _bal[msg.sender] directly
+        // ⚡ Auto-detect gas — avoids type:0 conflict with _sendDNR ETH transfer on Kortana EVM
+        const tx = await dex.swapExactKTUSDForDNR(buyAmountWei, 0, wallet.address);
         await tx.wait();
         console.log(`     ✅ Success! DNR bought. Pool ratio adjusted. Price should rise.`);
 
