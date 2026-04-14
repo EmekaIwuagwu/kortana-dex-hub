@@ -20,6 +20,14 @@ export function useDexWrite() {
     if (!to) throw new Error("DEX not deployed on this chain");
 
     try {
+      // 🦸‍♂️ SUPERMAN BYPASS: The Kortana Wallet extension's internal Ethers provider crashes
+      // when it tries to populate the transaction (getTransactionCount/gasPrice) because of the 7251/9002 mismatch.
+      // We fix this by fetching the nonce and gasPrice HERE in the dApp, so the extension doesn't have to!
+      const nonce = await publicClient.getTransactionCount({ 
+        address: walletClient.account.address 
+      });
+      const gasPrice = await publicClient.getGasPrice();
+
       const hash = await walletClient.sendTransaction({
         to,
         data: encodeFunctionData({
@@ -29,7 +37,9 @@ export function useDexWrite() {
         } as { abi: typeof DEX_ABI; functionName: string; args: unknown[] }) as `0x${string}`,
         value,
         gas: BigInt(500000), // Bug 1 fix
-        type: "legacy", // Bug 5 fix
+        gasPrice,            // 🛡️ Bypass Ethers gas lookup
+        nonce,               // 🛡️ Bypass Ethers nonce lookup
+        type: "legacy",      // Bug 5 fix
         chain: walletClient.chain
       });
 
