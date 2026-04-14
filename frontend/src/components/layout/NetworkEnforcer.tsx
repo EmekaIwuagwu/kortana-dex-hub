@@ -5,40 +5,35 @@ import { useEffect } from "react";
 import { kortanaMainnet } from "@/lib/wagmi";
 
 export function NetworkEnforcer() {
-  const { isConnected, chainId: accountChainId, status } = useAccount();
+  const { isConnected, chainId: accountChainId } = useAccount();
   const activeChainId = useChainId();
   const { switchChain, error: switchError, isPending } = useSwitchChain();
 
   useEffect(() => {
-    // 🕵️‍♂️ Superman Diagnostic Heartbeat
     if (isConnected) {
-      console.log("📡 [DEX DIAGNOSTIC] Network State:");
-      console.log("   - Account Chain ID:", accountChainId);
-      console.log("   - Active Chain ID (Wagmi):", activeChainId);
-      console.log("   - Expected Chain ID:", kortanaMainnet.id);
-      console.log("   - Connection Status:", status);
+      // 🕵️‍♂️ DIAGNOSTIC CHECK
+      const isCorrectNetwork = (accountChainId === 9002 || accountChainId === 7251);
       
-      if (accountChainId !== kortanaMainnet.id) {
-        console.warn("🚨 [DEX DIAGNOSTIC] CHAIN MISMATCH DETECTED!");
-        console.log("   - Forcing switchChain attempt...");
-        
-        // Don't spam the wallet if it's already pending
+      if (!isCorrectNetwork) {
+        console.warn("🚨 [DEX DIAGNOSTIC] UNKNOWN NETWORK:", accountChainId);
         if (!isPending) {
-          switchChain({ chainId: kortanaMainnet.id });
+           // We only attempt switch if the wallet supports it
+           switchChain({ chainId: kortanaMainnet.id });
         }
       } else {
-        console.log("✅ [DEX DIAGNOSTIC] Network is aligned. 9002 confirmed.");
+        console.log("✅ [DEX DIAGNOSTIC] Network Validated:", accountChainId);
       }
-    } else {
-       // console.log("💤 [DEX DIAGNOSTIC] Wallet not connected.");
     }
-  }, [isConnected, accountChainId, activeChainId, status, isPending, switchChain]);
+  }, [isConnected, accountChainId, activeChainId, isPending, switchChain]);
 
-  // Track switch errors
+  // Gracefully handle the "Method not found" case
   useEffect(() => {
     if (switchError) {
-      console.error("❌ [DEX DIAGNOSTIC] Switch Chain Error:", switchError.message);
-      console.log("   - Error Details:", switchError);
+      if (switchError.message.includes("wallet_switchEthereumChain not found")) {
+         console.warn("🛡️ Superman Guard: Wallet does not support auto-switching. User must switch manually in extension.");
+      } else {
+         console.error("❌ Switch Error:", switchError.message);
+      }
     }
   }, [switchError]);
 

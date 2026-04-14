@@ -9,14 +9,6 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
-// 🕵️‍♂️ INITIALIZATION DIAGNOSTIC
-if (typeof window !== 'undefined') {
-  console.log("🛠️ [DEX DIAGNOSTIC] Initialization...");
-  console.log("   - window.ethereum present:", !!(window as any).ethereum);
-  console.log("   - window.kortana present:", !!(window as any).kortana);
-  console.log("   - isMetaMask:", (window as any).ethereum?.isMetaMask);
-}
-
 // ─── Chain definitions ────────────────────────────────────────────────────────
 
 export const kortanaMainnet = {
@@ -45,12 +37,17 @@ export const kortanaTestnet = {
   },
 } as const satisfies Chain;
 
+// Detect 7251 (Legacy Testnet ID observed in diagnostics)
+export const kortanaLegacyTestnet = {
+  ...kortanaTestnet,
+  id: 7251,
+  name: "Kortana Testnet (Legacy)",
+} as const satisfies Chain;
+
 // ─── Environment detection ───────────────────────────────────────────────────
 const isProduction = process.env.NEXT_PUBLIC_APP_ENV === "production";
-const chains = isProduction ? [kortanaMainnet] as const : [kortanaMainnet, kortanaTestnet] as const;
-
-console.log("🌍 [DEX DIAGNOSTIC] Environment:", isProduction ? "PRODUCTION" : "DEVELOPMENT");
-console.log("🌍 [DEX DIAGNOSTIC] Allowed Chains:", chains.map((c: any) => c.id));
+// Add legacy ID to allowed chains to prevent "Wrong Network" if wallet is on 7251
+const chains = (isProduction ? [kortanaMainnet, kortanaLegacyTestnet] : [kortanaMainnet, kortanaTestnet, kortanaLegacyTestnet]) as any;
 
 // ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
@@ -63,7 +60,6 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
     target: () => ({
       id: 'kortana',
       name: 'Kortana Wallet',
-      // SSR Guard for BUILD
       provider: typeof window !== 'undefined' ? ((window as any).kortana || (window as any).ethereum) : undefined,
     }),
   }),
@@ -102,9 +98,8 @@ export const config = createConfig({
   ssr: true,
   multiInjectedProviderDiscovery: true, 
   transports: {
-    [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", {
-      timeout: 30000,
-    }),
+    [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 30000 }),
     [kortanaTestnet.id]: http("https://poseidon-rpc.testnet.kortana.xyz"),
+    [7251]: http("https://poseidon-rpc.testnet.kortana.xyz"), // Testnet RPC for legacy ID
   },
 });
