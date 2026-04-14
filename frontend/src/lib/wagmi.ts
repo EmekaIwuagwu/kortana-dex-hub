@@ -57,7 +57,8 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
       id: 'kortana',
       name: 'Kortana Wallet',
       // Check window.kortana then fallback to window.ethereum
-      provider: (window as any).kortana || (window as any).ethereum,
+      // SSR Guard: only check in the browser
+      provider: typeof window !== 'undefined' ? ((window as any).kortana || (window as any).ethereum) : undefined,
     }),
   }),
 });
