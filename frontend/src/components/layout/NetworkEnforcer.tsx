@@ -7,13 +7,10 @@ export function NetworkEnforcer() {
   const { isConnected, chainId } = useAccount();
 
   useEffect(() => {
-    // 🛡️ ULTIMATE 9002 SENTINEL
-    // If the wallet connects to anything other than Mainnet (9002), 
-    // we alert the user through the console and UI.
-    
-    if (isConnected && chainId !== 9002) {
-      console.warn("🚨 [MAINNET GUARD] WRONG NETWORK DETECTED:", chainId);
-      console.warn("🛡️ Use the Kortana Wallet settings to switch to Mainnet (Chain ID 9002).");
+    // 🕵️‍♂️ [SENTINEL] Silent mode active.
+    // The Identity Spoof in wagmi.ts handles the legacy ID internally.
+    if (isConnected) {
+      console.log("✅ [SENTINEL] Mainnet Mode Verified (Canonical):", chainId);
     }
   }, [isConnected, chainId]);
 

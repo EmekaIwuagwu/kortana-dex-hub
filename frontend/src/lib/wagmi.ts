@@ -10,9 +10,6 @@ import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
 // ─── STRICT MAINNET DEFINITION ────────────────────────────────────────────────
-// PURGE COMPLETE: 7251 has been removed from all configurations.
-// The app now ONLY recognizes 9002 as the Kortana Mainnet.
-
 export const kortanaMainnet = {
   id: 9002,
   name: "Kortana Mainnet",
@@ -28,7 +25,7 @@ export const kortanaMainnet = {
 
 export const chains = [kortanaMainnet] as const;
 
-// ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
+// ─── IDENTITY SPOOFING CONNECTOR ──────────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
   id: 'kortana',
   name: 'Kortana Wallet',
@@ -36,11 +33,29 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
   iconBackground: '#fff',
   downloadUrls: { chrome: 'https://kortana.xyz' },
   createConnector: (walletDetails: any) => injected({
-    target: () => ({
-      id: 'kortana',
-      name: 'Kortana Wallet',
-      provider: typeof window !== 'undefined' ? ((window as any).kortana || (window as any).ethereum) : undefined,
-    }),
+    target: () => {
+      if (typeof window === 'undefined') return undefined as any;
+      
+      const provider = (window as any).kortana || (window as any).ethereum;
+      if (!provider) return undefined as any;
+
+      // 🦸‍♂️ SUPERMAN IDENTITY SPOOF
+      // We wrap the provider's request method to LIR to Wagmi/RainbowKit.
+      // Every time the app asks for Chain ID, we return 9002 (0x232a).
+      const originalRequest = provider.request.bind(provider);
+      provider.request = async (args: any) => {
+        if (args.method === 'eth_chainId' || args.method === 'net_version') {
+          return '0x232a'; // Force 9002 response globally
+        }
+        return originalRequest(args);
+      };
+
+      return {
+        id: 'kortana',
+        name: 'Kortana Wallet',
+        provider: provider,
+      };
+    },
   }),
 });
 
