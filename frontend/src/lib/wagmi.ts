@@ -9,8 +9,8 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
-// ─── Chain definitions ────────────────────────────────────────────────────────
-
+// ─── Mainnet Definition ───────────────────────────────────────────────────────
+// THIS IS THE ONLY CHAIN ALLOWED ON dex.kortana.xyz
 export const kortanaMainnet = {
   id: 9002,
   name: "Kortana Mainnet",
@@ -24,26 +24,12 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
-export const kortanaTestnet = {
-  id: 72511,
-  name: "Kortana Testnet",
-  nativeCurrency: { name: "DNR", symbol: "DNR", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://poseidon-rpc.testnet.kortana.xyz"] },
-    public: { http: ["https://poseidon-rpc.testnet.kortana.xyz"] },
-  },
-  blockExplorers: {
-    default: { name: "Kortana Explorer", url: "https://explorer.testnet.kortana.xyz" },
-  },
-} as const satisfies Chain;
-
-// ─── Environment detection ───────────────────────────────────────────────────
+// ─── Production Locking ──────────────────────────────────────────────────────
 const isProduction = process.env.NEXT_PUBLIC_APP_ENV === "production";
 
-// STRICT PRODUCTION GUARD: Only Mainnet (9002) is allowed for live DEX.
-export const chains = isProduction 
-  ? [kortanaMainnet] as const 
-  : [kortanaMainnet, kortanaTestnet] as const;
+// Forcing STRICT mainnet-only in production. 
+// We are removing all testnet chains from the list to prevent the "Logged into Testnet" bug.
+export const chains = isProduction ? [kortanaMainnet] as const : [kortanaMainnet] as const;
 
 // ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
@@ -94,7 +80,6 @@ export const config = createConfig({
   ssr: true,
   multiInjectedProviderDiscovery: true, 
   transports: {
-    [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 30000 }),
-    [kortanaTestnet.id]: http("https://poseidon-rpc.testnet.kortana.xyz"),
+    [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 60000 }),
   },
 });
