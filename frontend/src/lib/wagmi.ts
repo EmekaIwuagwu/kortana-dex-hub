@@ -9,9 +9,9 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
-// ─── Mainnet Definition ───────────────────────────────────────────────────────
-// We include 7251 as a valid ID because the Kortana Wallet extension is 
-// hardcoded to report 7251 even when visiting Mainnet.
+// ─── UNIFIED MAINNET DEFINITIONS ──────────────────────────────────────────────
+// We define both the Official (9002) and Legacy (7251) IDs as "Kortana Mainnet"
+// to ensure a seamless UI experience regardless of the wallet's internal state.
 
 export const kortanaMainnet = {
   id: 9002,
@@ -26,11 +26,10 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
-// Legacy ID 7251 (Reported by Kortana Wallet Extension)
 export const kortanaLegacy = {
   ...kortanaMainnet,
   id: 7251,
-  name: "Kortana Mainnet (Legacy Wallet Mode)",
+  name: "Kortana Mainnet", // Branded exactly the same for UI consistency
 } as const satisfies Chain;
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -51,7 +50,7 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
   }),
 });
 
-// Using a new Project ID to resolve the 403 Forbidden error observed in diagnostics
+// Using a clean, public-ready Project ID
 const projectId = "3fcc6b5675e297800e84b72643a37554"; 
 
 const connectors = connectorsForWallets(
@@ -85,6 +84,6 @@ export const config = createConfig({
   multiInjectedProviderDiscovery: true, 
   transports: {
     [9002]: http("https://zeus-rpc.mainnet.kortana.xyz"),
-    [7251]: http("https://zeus-rpc.mainnet.kortana.xyz"), // Map legacy ID to Mainnet RPC!
+    [7251]: http("https://zeus-rpc.mainnet.kortana.xyz"),
   },
 });
