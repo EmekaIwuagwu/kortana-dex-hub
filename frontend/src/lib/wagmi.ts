@@ -9,7 +9,10 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
-// ─── STRICT MAINNET DEFINITION ────────────────────────────────────────────────
+// ─── UNIFIED MAINNET SUITE ────────────────────────────────────────────────────
+// We support both the official 9002 ID and the legacy 7251 ID to ensure
+// that every Kortana Wallet extension can connect without crashing.
+
 export const kortanaMainnet = {
   id: 9002,
   name: "Kortana Mainnet",
@@ -23,9 +26,15 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
-export const chains = [kortanaMainnet] as const;
+export const kortanaLegacy = {
+  ...kortanaMainnet,
+  id: 7251,
+  name: "Kortana Mainnet (Legacy Wallet Mode)",
+} as const satisfies Chain;
 
-// ─── IDENTITY SPOOFING CONNECTOR ──────────────────────────────────────────────
+export const chains = [kortanaMainnet, kortanaLegacy] as const;
+
+// ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
   id: 'kortana',
   name: 'Kortana Wallet',
@@ -33,29 +42,11 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
   iconBackground: '#fff',
   downloadUrls: { chrome: 'https://kortana.xyz' },
   createConnector: (walletDetails: any) => injected({
-    target: () => {
-      if (typeof window === 'undefined') return undefined as any;
-      
-      const provider = (window as any).kortana || (window as any).ethereum;
-      if (!provider) return undefined as any;
-
-      // 🦸‍♂️ SUPERMAN IDENTITY SPOOF
-      // We wrap the provider's request method to LIR to Wagmi/RainbowKit.
-      // Every time the app asks for Chain ID, we return 9002 (0x232a).
-      const originalRequest = provider.request.bind(provider);
-      provider.request = async (args: any) => {
-        if (args.method === 'eth_chainId' || args.method === 'net_version') {
-          return '0x232a'; // Force 9002 response globally
-        }
-        return originalRequest(args);
-      };
-
-      return {
-        id: 'kortana',
-        name: 'Kortana Wallet',
-        provider: provider,
-      };
-    },
+    target: () => ({
+      id: 'kortana',
+      name: 'Kortana Wallet',
+      provider: typeof window !== 'undefined' ? ((window as any).kortana || (window as any).ethereum) : undefined,
+    }),
   }),
 });
 
@@ -92,5 +83,6 @@ export const config = createConfig({
   multiInjectedProviderDiscovery: true, 
   transports: {
     [9002]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 60000 }),
+    [7251]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 60000 }), // Unified Transport
   },
 });
