@@ -27,21 +27,21 @@ const GAS_LIMIT    = 800_000;
 const DNR_BUY_CHANCE = 0.70; // 70% Buy DNR / 30% Sell DNR
 
 // How much DNR to spend on "Sell DNR" cycles (organic red bars)
-const MIN_DNR_SELL = 3.0;
-const MAX_DNR_SELL = 8.0;
+const MIN_DNR_SELL = 2.0;
+const MAX_DNR_SELL = 6.0;
 
 // How much ktUSD to spend on "Buy DNR" cycles (price-pushing green bars)
-// The bot will check its own ktUSD balance and use a portion
-const MIN_KTUSD_BUY = 500.0;
-const MAX_KTUSD_BUY = 2000.0;
+// Adjusted to match actual wallet balances (smallest wallet has ~6877 ktUSD)
+const MIN_KTUSD_BUY = 200.0;
+const MAX_KTUSD_BUY = 1000.0;
 
 // Wait between cycles
 const MIN_MS = 2 * 60_000; // 2 minutes
 const MAX_MS = 6 * 60_000; // 6 minutes
 
 // Minimum balances to skip a cycle
-const MIN_DNR_BALANCE_FOR_SELL  = 12.0; // Need at least 12 DNR to do a sell cycle
-const MIN_KTUSD_BALANCE_FOR_BUY = 500.0; // Need at least 500 ktUSD to do a buy cycle
+const MIN_DNR_BALANCE_FOR_SELL  = 5.0;   // Need at least 5 DNR to do a sell cycle
+const MIN_KTUSD_BALANCE_FOR_BUY = 200.0; // Need at least 200 ktUSD to do a buy cycle
 
 // ── ABI ───────────────────────────────────────────────────────────────────
 const ABI = [
