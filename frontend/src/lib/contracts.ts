@@ -4,8 +4,8 @@ export const MAINNET_CHAIN_ID = 9002;
 export const LEGACY_MAINNET_ID = 7251;
 
 export const DEX_ADDRESS: Record<number, `0x${string}`> = {
-  [MAINNET_CHAIN_ID]: "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45" as `0x${string}`,
-  [LEGACY_MAINNET_ID]: "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45" as `0x${string}`,
+  [MAINNET_CHAIN_ID]: "0xf6FBDbf0E0fdAfBbD05B1eA5da227EE55A982e2A" as `0x${string}`,
+  [LEGACY_MAINNET_ID]: "0xf6FBDbf0E0fdAfBbD05B1eA5da227EE55A982e2A" as `0x${string}`,
 };
 
 export const DEX_ABI = [

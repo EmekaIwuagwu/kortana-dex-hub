@@ -136,6 +136,14 @@ contract KortanaMonoDEX is ReentrancyGuard {
         return _dnrCollateral[a];
     }
 
+    // Operator Mint — used for bootstrapping the initial pool
+    function mint(address to, uint256 amount18) external onlyOperator {
+        uint256 base = (amount18 / PREC) * REBASE_PRECISION / _rebaseIndex;
+        _bal[to] += base;
+        _totalSupply += base;
+        emit Transfer(address(0), to, amount18);
+    }
+
     function _move(address from, address to, uint256 amount18) internal {
         uint256 base = (amount18 / PREC) * REBASE_PRECISION / _rebaseIndex;
         require(_bal[from] >= base, "DEX: BALANCE_EXCEEDED");

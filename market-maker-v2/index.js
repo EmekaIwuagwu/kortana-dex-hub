@@ -13,7 +13,7 @@ require("dotenv").config();
 // ── Config ────────────────────────────────────────────────────────────────
 const RPC_URL      = process.env.RPC_URL    || "https://zeus-rpc.mainnet.kortana.xyz";
 const PRIVATE_KEYS = (process.env.PRIVATE_KEY || "").split(",").map(k => k.trim()).filter(k => k.length > 0);
-const DEX_ADDR     = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45";
+const DEX_ADDR     = "0xf6FBDbf0E0fdAfBbD05B1eA5da227EE55A982e2A";
 
 const GAS_PRICE    = ethers.parseUnits("3", "gwei"); // Use 3 Gwei consistently
 const GAS_LIMIT    = 1000000; // Increased to 1M to handle ReentrancyGuard overhead
