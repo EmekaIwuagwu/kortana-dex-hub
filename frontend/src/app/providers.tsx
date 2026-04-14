@@ -25,8 +25,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             accentColor: "#00d4ff",
             accentColorForeground: "#060810",
           })}
-          // Always default to Kortana Mainnet (chain ID 9002)
-          initialChain={kortanaMainnet.id}
+          // Always default to Kortana Mainnet
+          initialChain={kortanaMainnet}
           showRecentTransactions={true}
         >
           {children}
