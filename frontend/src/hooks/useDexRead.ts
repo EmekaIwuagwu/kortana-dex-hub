@@ -1,8 +1,9 @@
-import { useReadContract, useChainId } from "wagmi";
+import { useReadContract, useChainId, usePublicClient } from "wagmi";
 import { DEX_ADDRESS, DEX_ABI } from "@/lib/contracts";
 
 export function useDexRead() {
   const chainId = useChainId();
+  const publicClient = usePublicClient({ chainId: 9002 }); // Always read from Mainnet 9002
   const dexAddress = DEX_ADDRESS[chainId as keyof typeof DEX_ADDRESS] as `0x${string}`;
 
   const { data: rebaseInfoData, refetch: refetchRebase } = useReadContract({
@@ -36,6 +37,22 @@ export function useDexRead() {
   const rebaseInfo = rebaseInfoData as [bigint, bigint, bigint, bigint, bigint] | undefined;
   const reserves = getReservesData as [bigint, bigint, number] | undefined;
 
+  const getAllowance = async (spender: string, owner: string) => {
+    if (!publicClient) return BigInt(0);
+    try {
+      const data = await publicClient.readContract({
+        address: dexAddress,
+        abi: DEX_ABI,
+        functionName: "allowance",
+        args: [owner as `0x${string}`, spender as `0x${string}`],
+      });
+      return data as bigint;
+    } catch (e) {
+      console.error(e);
+      return BigInt(0);
+    }
+  };
+
   return {
     rebaseIndex: rebaseInfo?.[0] ?? BigInt(0),
     lastRebaseTime: rebaseInfo?.[1] ?? BigInt(0),
@@ -47,6 +64,7 @@ export function useDexRead() {
     reserveKTUSD: reserves?.[1] ?? BigInt(0),
 
     totalSupply: totalSupplyData as bigint ?? BigInt(0),
+    getAllowance,
 
     refetchAll: () => {
       refetchRebase();
