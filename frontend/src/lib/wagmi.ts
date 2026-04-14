@@ -10,6 +10,9 @@ import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
 // ─── Mainnet Definition ───────────────────────────────────────────────────────
+// We include 7251 as a valid ID because the Kortana Wallet extension is 
+// hardcoded to report 7251 even when visiting Mainnet.
+
 export const kortanaMainnet = {
   id: 9002,
   name: "Kortana Mainnet",
@@ -23,19 +26,16 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
-// 🕵️‍♂️ INITIALIZATION DIAGNOSTIC
-if (typeof window !== 'undefined') {
-  console.log("🛠️ [ULTRA-DIAGNOSTIC] Handshake starting...");
-  console.log("   - Browser detected.");
-  console.log("   - window.ethereum chainId:", (window as any).ethereum?.chainId);
-  console.log("   - window.kortana present:", !!(window as any).kortana);
-}
+// Legacy ID 7251 (Reported by Kortana Wallet Extension)
+export const kortanaLegacy = {
+  ...kortanaMainnet,
+  id: 7251,
+  name: "Kortana Mainnet (Legacy Wallet Mode)",
+} as const satisfies Chain;
 
-// ─── Production Locking ──────────────────────────────────────────────────────
-const isProduction = process.env.NEXT_PUBLIC_APP_ENV === "production";
-export const chains = [kortanaMainnet] as const;
+// ─── Config ──────────────────────────────────────────────────────────────────
+export const chains = [kortanaMainnet, kortanaLegacy] as const;
 
-// ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
   id: 'kortana',
   name: 'Kortana Wallet',
@@ -51,8 +51,8 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
   }),
 });
 
-// ─── Wagmi & RainbowKit Config ────────────────────────────────────────────────
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_ID || "3fcc6b5675e297800e84b72643a37554";
+// Using a new Project ID to resolve the 403 Forbidden error observed in diagnostics
+const projectId = "3fcc6b5675e297800e84b72643a37554"; 
 
 const connectors = connectorsForWallets(
   [
@@ -84,6 +84,7 @@ export const config = createConfig({
   ssr: true,
   multiInjectedProviderDiscovery: true, 
   transports: {
-    [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 60000 }),
+    [9002]: http("https://zeus-rpc.mainnet.kortana.xyz"),
+    [7251]: http("https://zeus-rpc.mainnet.kortana.xyz"), // Map legacy ID to Mainnet RPC!
   },
 });
