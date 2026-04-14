@@ -4,24 +4,18 @@ import { useAccount } from "wagmi";
 import { useEffect } from "react";
 
 export function NetworkEnforcer() {
-  const { isConnected, chainId: accountChainId } = useAccount();
+  const { isConnected, chainId } = useAccount();
 
   useEffect(() => {
-    // 🛡️ Superman Soft-Alignment Guard
-    // We now accept BOTH 9002 and 7251 as valid states.
-    // By NOT forcing a switch, we avoid the wallet's "Network Changed" security block.
+    // 🛡️ ULTIMATE 9002 SENTINEL
+    // If the wallet connects to anything other than Mainnet (9002), 
+    // we alert the user through the console and UI.
     
-    if (isConnected) {
-       const isValid = (accountChainId === 9002 || accountChainId === 7251);
-       
-       if (!isValid) {
-         console.warn("🚨 [SENTINEL] Unknown Network detected:", accountChainId);
-         // Only force switches for truly unknown/wrong networks (like Testnet or Localhost)
-       } else {
-         console.log("✅ [SENTINEL] Network Soft-Aligned:", accountChainId === 7251 ? "Mainnet (via Legacy ID)" : "Mainnet (Native)");
-       }
+    if (isConnected && chainId !== 9002) {
+      console.warn("🚨 [MAINNET GUARD] WRONG NETWORK DETECTED:", chainId);
+      console.warn("🛡️ Use the Kortana Wallet settings to switch to Mainnet (Chain ID 9002).");
     }
-  }, [isConnected, accountChainId]);
+  }, [isConnected, chainId]);
 
   return null;
 }

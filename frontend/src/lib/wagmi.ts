@@ -9,9 +9,9 @@ import { createConfig, http } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { type Chain } from "viem";
 
-// ─── UNIFIED MAINNET DEFINITIONS ──────────────────────────────────────────────
-// We define both the Official (9002) and Legacy (7251) IDs as "Kortana Mainnet"
-// to ensure a seamless UI experience regardless of the wallet's internal state.
+// ─── STRICT MAINNET DEFINITION ────────────────────────────────────────────────
+// PURGE COMPLETE: 7251 has been removed from all configurations.
+// The app now ONLY recognizes 9002 as the Kortana Mainnet.
 
 export const kortanaMainnet = {
   id: 9002,
@@ -26,15 +26,9 @@ export const kortanaMainnet = {
   },
 } as const satisfies Chain;
 
-export const kortanaLegacy = {
-  ...kortanaMainnet,
-  id: 7251,
-  name: "Kortana Mainnet", // Branded exactly the same for UI consistency
-} as const satisfies Chain;
+export const chains = [kortanaMainnet] as const;
 
-// ─── Config ──────────────────────────────────────────────────────────────────
-export const chains = [kortanaMainnet, kortanaLegacy] as const;
-
+// ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
   id: 'kortana',
   name: 'Kortana Wallet',
@@ -50,7 +44,6 @@ const kortanaWallet = ({ projectId, chains }: any) => ({
   }),
 });
 
-// Using a clean, public-ready Project ID
 const projectId = "3fcc6b5675e297800e84b72643a37554"; 
 
 const connectors = connectorsForWallets(
@@ -83,7 +76,6 @@ export const config = createConfig({
   ssr: true,
   multiInjectedProviderDiscovery: true, 
   transports: {
-    [9002]: http("https://zeus-rpc.mainnet.kortana.xyz"),
-    [7251]: http("https://zeus-rpc.mainnet.kortana.xyz"),
+    [9002]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 60000 }),
   },
 });
