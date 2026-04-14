@@ -37,17 +37,13 @@ export const kortanaTestnet = {
   },
 } as const satisfies Chain;
 
-// Detect 7251 (Legacy Testnet ID observed in diagnostics)
-export const kortanaLegacyTestnet = {
-  ...kortanaTestnet,
-  id: 7251,
-  name: "Kortana Testnet (Legacy)",
-} as const satisfies Chain;
-
 // ─── Environment detection ───────────────────────────────────────────────────
 const isProduction = process.env.NEXT_PUBLIC_APP_ENV === "production";
-// Add legacy ID to allowed chains to prevent "Wrong Network" if wallet is on 7251
-const chains = (isProduction ? [kortanaMainnet, kortanaLegacyTestnet] : [kortanaMainnet, kortanaTestnet, kortanaLegacyTestnet]) as any;
+
+// STRICT PRODUCTION GUARD: Only Mainnet (9002) is allowed for live DEX.
+export const chains = isProduction 
+  ? [kortanaMainnet] as const 
+  : [kortanaMainnet, kortanaTestnet] as const;
 
 // ─── Custom Kortana Wallet Connector ──────────────────────────────────────────
 const kortanaWallet = ({ projectId, chains }: any) => ({
@@ -100,6 +96,5 @@ export const config = createConfig({
   transports: {
     [kortanaMainnet.id]: http("https://zeus-rpc.mainnet.kortana.xyz", { timeout: 30000 }),
     [kortanaTestnet.id]: http("https://poseidon-rpc.testnet.kortana.xyz"),
-    [7251]: http("https://poseidon-rpc.testnet.kortana.xyz"), // Testnet RPC for legacy ID
   },
 });
