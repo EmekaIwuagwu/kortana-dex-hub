@@ -2,7 +2,7 @@
 import React from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientButton } from "@/components/ui/GradientButton";
-import { Copy, ExternalLink, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Copy, ExternalLink, ArrowRight, ShieldCheck, Zap, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
