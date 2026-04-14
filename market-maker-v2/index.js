@@ -1,12 +1,10 @@
 /**
- * KortanaDEX Market Maker — Production v9.0 (The Dual-Engine Edition)
+ * KortanaDEX Market Maker — Production v10.0 (The Indestructible Edition)
  * =======================================================================
- * Strategy:
- *  - TWO-WAY trading: Buys DNR (ktUSD→DNR) AND Sells DNR (DNR→ktUSD)
- *  - NET BIAS: 70% of actions BUY DNR (spend ktUSD) to push price UP
- *  - 30% of actions SELL DNR (spend DNR) to create realistic organic volume
- *  - Direct DEX interaction — no proxy contract needed
- *  - Full approval lifecycle management for ktUSD spending
+ * Features:
+ *  - MANUAL ENCODING: Bypasses high-level binder errors (Zero "Empty Data" bugs)
+ *  - LEGACY EVM SYNC: Uses Type 0 transactions for maximum Kortana RPC compatibility
+ *  - 70/30 DUAL ENGINE: Net Buy Pressure (70%) to grow DNR price
  */
 "use strict";
 const { ethers } = require("ethers");
@@ -15,162 +13,124 @@ require("dotenv").config();
 // ── Config ────────────────────────────────────────────────────────────────
 const RPC_URL      = process.env.RPC_URL    || "https://zeus-rpc.mainnet.kortana.xyz";
 const PRIVATE_KEYS = (process.env.PRIVATE_KEY || "").split(",").map(k => k.trim()).filter(k => k.length > 0);
-const DEX          = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45"; // KortanaMonoDEX
+const DEX_ADDR     = "0x8EbbEa445af4Cae8a2FA16b184EeB792d424CD45";
 
-const GAS_PRICE    = 3n;
-const GAS_LIMIT    = 800_000;
+const GAS_PRICE    = ethers.parseUnits("3", "gwei"); // Use 3 Gwei consistently
+const GAS_LIMIT    = 1000000; // Increased to 1M to handle ReentrancyGuard overhead
 
-// ── Strategy Config ────────────────────────────────────────────────────────
-// DNR_BUY_CHANCE = probability of "Buy DNR" (spend ktUSD) each cycle
-// This pushes the DNR price UP over time.
-// 30% = "Sell DNR" (spend DNR, get ktUSD) = creates realistic organic volume
-const DNR_BUY_CHANCE = 0.70; // 70% Buy DNR / 30% Sell DNR
+// ── Strategy ──────────────────────────────────────────────────────────────
+const DNR_BUY_CHANCE = 0.70; 
+const MIN_KTUSD_BUY  = 200.0;
+const MAX_KTUSD_BUY  = 800.0;
+const MIN_DNR_SELL   = 2.0;
+const MAX_DNR_SELL   = 5.0;
 
-// How much DNR to spend on "Sell DNR" cycles (organic red bars)
-const MIN_DNR_SELL = 2.0;
-const MAX_DNR_SELL = 6.0;
+const MIN_MS = 2 * 60_000;
+const MAX_MS = 5 * 60_000;
 
-// How much ktUSD to spend on "Buy DNR" cycles (price-pushing green bars)
-// Adjusted to match actual wallet balances (smallest wallet has ~6877 ktUSD)
-const MIN_KTUSD_BUY = 200.0;
-const MAX_KTUSD_BUY = 1000.0;
-
-// Wait between cycles
-const MIN_MS = 2 * 60_000; // 2 minutes
-const MAX_MS = 6 * 60_000; // 6 minutes
-
-// Minimum balances to skip a cycle
-const MIN_DNR_BALANCE_FOR_SELL  = 5.0;   // Need at least 5 DNR to do a sell cycle
-const MIN_KTUSD_BALANCE_FOR_BUY = 200.0; // Need at least 200 ktUSD to do a buy cycle
-
-// ── ABI ───────────────────────────────────────────────────────────────────
-const ABI = [
-  // Core swap functions
-  "function swapExactDNRForKTUSD(uint256 minOut18, address to) external payable",
-  "function swapExactKTUSDForDNR(uint256 amountIn18, uint256 minOut18, address to) external",
-  // ERC-20 (ktUSD)
+// ── ABI Interface (Explicit) ──────────────────────────────────────────────
+const INTERFACE = new ethers.Interface([
+  "function swapExactDNRForKTUSD(uint256 minOut, address to) external payable",
+  "function swapExactKTUSDForDNR(uint256 amountIn, uint256 minOut, address to) external",
   "function balanceOf(address) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-  // AMM state
-  "function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
-];
+  "function getReserves() external view returns (uint112, uint112, uint32)"
+]);
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rand  = (lo, hi) => Math.random() * (hi - lo) + lo;
-const fmt   = n => Number(ethers.formatEther(n)).toFixed(4);
 
-// Note: swapExactKTUSDForDNR checks _bal[msg.sender] directly — no approval needed.
-// The approve() function only affects transferFrom() which this swap doesn't use.
-
-// ── Main Loop ─────────────────────────────────────────────────────────────
 async function main() {
-  if (PRIVATE_KEYS.length === 0) {
-    console.error("FATAL: No PRIVATE_KEYS found in environment.");
-    process.exit(1);
-  }
-
+  if (PRIVATE_KEYS.length === 0) { console.error("FATAL: NO KEYS"); process.exit(1); }
   const provider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
-  // Health-check server for Render
   require("http").createServer((req, res) => {
-    res.writeHead(200);
-    res.end("KortanaDEX Dual-Engine Market Maker ONLINE");
+    res.writeHead(200); res.end("V10 INDESTRUCTIBLE BOT ONLINE");
   }).listen(process.env.PORT || 10000);
 
   console.log("╔════════════════════════════════════════════════════╗");
-  console.log("║   KortanaDEX Market Maker — Version 9.0            ║");
-  console.log("║   [ The Dual-Engine Edition — Price Support Mode ] ║");
+  console.log("║   KortanaDEX Market Maker — Version 10.0           ║");
+  console.log("║   [ The Indestructible Edition — ZERO FAILURE ]    ║");
   console.log("╚════════════════════════════════════════════════════╝");
-  console.log(`  Strategy: 70% BUY DNR (price support) | 30% SELL DNR (volume)`);
-  console.log(`  Target:   Organic Two-Way Volume with Net DNR Price Uptrend`);
-  console.log("─────────────────────────────────────────────────────");
 
   let cycle = 0;
-
   while (true) {
     cycle++;
-    const randomKey = PRIVATE_KEYS[Math.floor(Math.random() * PRIVATE_KEYS.length)];
-    const wallet    = new ethers.Wallet(randomKey, provider);
-    const dex       = new ethers.Contract(DEX, ABI, wallet);
+    const key = PRIVATE_KEYS[Math.floor(Math.random() * PRIVATE_KEYS.length)];
+    const wallet = new ethers.Wallet(key, provider);
+    
+    // Refresh Pool State
+    const dexRead = new ethers.Contract(DEX_ADDR, INTERFACE, provider);
+    const [r0, r1] = await dexRead.getReserves();
+    const price = (Number(r1) / Number(r0)).toFixed(4);
 
     const sleepMs = Math.floor(rand(MIN_MS, MAX_MS));
-    console.log(`\n[Cycle ${cycle}] Trader ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)} | Next action in ${(sleepMs / 60000).toFixed(1)}m`);
+    console.log(`\n[Cycle ${cycle}] Bot ${wallet.address.slice(0,6)}... Price: ${price} | Next action in ${(sleepMs/60000).toFixed(1)}m`);
     await sleep(sleepMs);
 
     try {
-      // ── Read Pool State ─────────────────────────────────────────────────
-      const [r0Raw, r1Raw] = await dex.getReserves();
-      const reserveDNR   = Number(ethers.formatEther(r0Raw));
-      const reserveKTUSD = Number(ethers.formatEther(r1Raw));
-      const currentPrice = reserveKTUSD > 0 && reserveDNR > 0
-        ? (reserveKTUSD / reserveDNR).toFixed(4)
-        : "N/A";
-
-      console.log(`  📊 Pool: ${reserveDNR.toFixed(2)} DNR | ${reserveKTUSD.toFixed(2)} ktUSD | Price: 1 DNR = ${currentPrice} ktUSD`);
-
-      // ── Pool Dry Guard ───────────────────────────────────────────────────
-      if (reserveDNR < 1.0) {
-        console.log("  ⚠️  Pool is dry — skipping cycle to protect reserves.");
-        continue;
-      }
-
-      // ── Decide Action ────────────────────────────────────────────────────
       const isBuyDNR = Math.random() < DNR_BUY_CHANCE;
 
       if (isBuyDNR) {
-        // ═══════════════════════════════════════════════════════════════════
-        // 🟢 BUY DNR: Spend ktUSD → Receive DNR
-        // This REMOVES DNR from the pool → DNR price goes UP ✅
-        // ═══════════════════════════════════════════════════════════════════
-        const ktUSDBalance = await dex.balanceOf(wallet.address);
-        const ktUSDBalNum  = Number(ethers.formatEther(ktUSDBalance));
-
-        if (ktUSDBalNum < MIN_KTUSD_BALANCE_FOR_BUY) {
-          console.log(`  ⏭️  SKIP BUY: Insufficient ktUSD (${ktUSDBalNum.toFixed(2)} < ${MIN_KTUSD_BALANCE_FOR_BUY})`);
+        // 🟢 BUY DNR (Spend ktUSD)
+        const ktUSDWei = await dexRead.balanceOf(wallet.address);
+        const ktUSDBal = Number(ethers.formatEther(ktUSDWei));
+        
+        if (ktUSDBal < MIN_KTUSD_BUY) {
+          console.log(`  ⏭️  Skip Buy: Low ktUSD (${ktUSDBal.toFixed(2)})`);
           continue;
         }
 
-        const buyAmount    = rand(MIN_KTUSD_BUY, Math.min(MAX_KTUSD_BUY, ktUSDBalNum * 0.1));
-        const buyAmountWei = ethers.parseEther(buyAmount.toFixed(6));
-
-        console.log(`  🏹 🟢 BUY DNR : Spending ${buyAmount.toFixed(2)} ktUSD → Getting DNR (price UP ↑)`);
-
-        // ⚡ No approval needed — swapExactKTUSDForDNR deducts from internal _bal[msg.sender] directly
-        // ⚡ Auto-detect gas — avoids type:0 conflict with _sendDNR ETH transfer on Kortana EVM
-        const tx = await dex.swapExactKTUSDForDNR(buyAmountWei, 0, wallet.address);
+        const amt = rand(MIN_KTUSD_BUY, Math.min(MAX_KTUSD_BUY, ktUSDBal * 0.5));
+        const amtWei = ethers.parseEther(amt.toFixed(6));
+        
+        console.log(`  🏹 🟢 BUY DNR: Spending ${amt.toFixed(2)} ktUSD (Pushing Price UP ↑)`);
+        
+        // --- MANUAL ENCODING (Indestructible) ---
+        const data = INTERFACE.encodeFunctionData("swapExactKTUSDForDNR", [amtWei, 0, wallet.address]);
+        const tx = await wallet.sendTransaction({
+          to: DEX_ADDR,
+          data: data,
+          gasLimit: GAS_LIMIT,
+          gasPrice: GAS_PRICE,
+          type: 0 // Force Legacy for Kortana RPC
+        });
+        
+        console.log(`     🛰️ Transaction Sent: ${tx.hash.slice(0,10)}... waiting...`);
         await tx.wait();
-        console.log(`     ✅ Success! DNR bought. Pool ratio adjusted. Price should rise.`);
+        console.log(`     ✅ Success! DNR price pushed.`);
 
       } else {
-        // ═══════════════════════════════════════════════════════════════════
-        // 🔴 SELL DNR: Spend DNR → Receive ktUSD
-        // This ADDS DNR to the pool → creates organic volume / red bars
-        // ═══════════════════════════════════════════════════════════════════
-        const dnrBalance = await provider.getBalance(wallet.address);
-        const dnrBalNum  = Number(ethers.formatEther(dnrBalance));
+        // 🔴 SELL DNR (Spend DNR -> Native)
+        const dnrWei = await provider.getBalance(wallet.address);
+        const dnrBal = Number(ethers.formatEther(dnrWei));
 
-        if (dnrBalNum < MIN_DNR_BALANCE_FOR_SELL) {
-          console.log(`  ⏭️  SKIP SELL: Insufficient DNR (${dnrBalNum.toFixed(2)} < ${MIN_DNR_BALANCE_FOR_SELL})`);
+        if (dnrBal < (MAX_DNR_SELL + 5)) {
+          console.log(`  ⏭️  Skip Sell: Low DNR (${dnrBal.toFixed(2)})`);
           continue;
         }
 
-        const sellDNR  = rand(MIN_DNR_SELL, MAX_DNR_SELL).toFixed(4);
-        const sellWei  = ethers.parseEther(sellDNR);
+        const amt = rand(MIN_DNR_SELL, MAX_DNR_SELL);
+        const amtWei = ethers.parseEther(amt.toFixed(6));
 
-        console.log(`  🏹 🔴 SELL DNR: Spending ${sellDNR} DNR → Getting ktUSD (organic volume)`);
-
-        const tx = await dex.swapExactDNRForKTUSD(0, wallet.address, {
-          value: sellWei, gasLimit: GAS_LIMIT, gasPrice: GAS_PRICE, type: 0,
+        console.log(`  🏹 🔴 SELL DNR: Spending ${amt.toFixed(2)} DNR (Creating Volume)`);
+        
+        const data = INTERFACE.encodeFunctionData("swapExactDNRForKTUSD", [0, wallet.address]);
+        const tx = await wallet.sendTransaction({
+          to: DEX_ADDR,
+          value: amtWei,
+          data: data,
+          gasLimit: GAS_LIMIT,
+          gasPrice: GAS_PRICE,
+          type: 0
         });
-        await tx.wait();
-        console.log(`     ✅ Success! Organic volume bar printed. ktUSD received.`);
-      }
 
+        console.log(`     🛰️ Transaction Sent: ${tx.hash.slice(0,10)}... waiting...`);
+        await tx.wait();
+        console.log(`     ✅ Success! Sell volume recorded.`);
+      }
     } catch (err) {
-      const msg = err?.message || String(err);
-      console.error(`  ⚠️  Error: ${msg.slice(0, 150)}`);
-      await sleep(15_000); // 15s cooldown on error
+      console.error(`  ⚠️ FATAL: ${err.message?.slice(0,150)}`);
+      await sleep(10000);
     }
   }
 }
